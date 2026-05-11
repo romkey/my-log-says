@@ -1,0 +1,34 @@
+---
+description: Minitest and testing conventions
+globs: "test/**/*.rb"
+alwaysApply: false
+---
+
+# Testing
+
+- **Framework:** Minitest 5 with Rails test helpers
+- **Fixtures:** YAML fixtures in `test/fixtures/`; `fixtures :all` is set in `test_helper.rb`
+- **Parallelization:** Tests run in parallel by processor count
+- **Run tests:** `docker compose -f docker-compose.test.yml run --rm test` (creates DB, loads schema, runs suite)
+
+## Conventions
+
+- Place model tests in `test/models/`, controller tests in `test/controllers/`, service tests in `test/services/`
+- Use `assert_*` methods, not RSpec-style `expect`
+- Use `setup` and `teardown` methods for test lifecycle, not `before`/`after`
+- System tests use Capybara with Selenium Chrome — place in `test/system/`
+- Stub Docker command runners and inference API clients in tests — never hit the real Docker daemon or external LLM APIs
+- Cover both unique-log analysis and duplicate-log counting whenever ingestion behavior changes
+
+```ruby
+# ✅ Standard test structure
+class ProviderTest < ActiveSupport::TestCase
+  setup do
+    @provider = providers(:postgresql)
+  end
+
+  test 'should be valid with required attributes' do
+    assert @provider.valid?
+  end
+end
+```

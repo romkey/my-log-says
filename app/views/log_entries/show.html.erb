@@ -1,0 +1,31 @@
+<div class="d-flex align-items-end justify-content-between mb-3">
+  <div>
+    <div class="text-13 mb-1"><%= link_to "Log entries", log_entries_path %></div>
+    <h1 class="h-page-title mb-0"><%= @log_entry.source_container %></h1>
+    <div class="text-13 text-secondary mt-1">
+      <span class="text-body"><%= @log_entry.occurrence_count %></span> observed ·
+      <%= @log_entry.analysis_status.humanize %>
+    </div>
+  </div>
+  <%= button_to "Analyze", analyze_log_entry_path(@log_entry), class: "btn btn-primary btn-sm" %>
+</div>
+
+<section class="card mb-3">
+  <div class="card-body">
+    <h2 class="h6">Message</h2>
+    <pre class="mb-0 text-wrap"><%= @log_entry.message %></pre>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-body">
+    <h2 class="h6">Analysis</h2>
+    <% if @log_entry.analysis.present? %>
+      <div><%= simple_format @log_entry.analysis %></div>
+    <% elsif @log_entry.analysis_error.present? %>
+      <div class="text-danger"><%= @log_entry.analysis_error %></div>
+    <% else %>
+      <div class="text-secondary">Analysis has not completed yet.</div>
+    <% end %>
+  </div>
+</section>

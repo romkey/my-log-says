@@ -1,0 +1,32 @@
+<div class="d-flex align-items-end justify-content-between mb-3">
+  <div>
+    <h1 class="h-page-title mb-0">Log entries</h1>
+    <div class="text-13 text-secondary mt-1">
+      <span class="text-body"><%= LogEntry.count %></span> unique ·
+      <span class="text-body"><%= LogEntry.sum(:occurrence_count) %></span> observed
+    </div>
+  </div>
+</div>
+
+<table class="table table-sm table-compact align-middle">
+  <thead>
+    <tr>
+      <th>Container</th>
+      <th>Message</th>
+      <th class="num">Seen</th>
+      <th>Status</th>
+      <th>Last seen</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @log_entries.each do |log_entry| %>
+      <tr>
+        <td><%= link_to log_entry.source_container, log_entry_path(log_entry), class: "link-light" %></td>
+        <td class="text-truncate" style="max-width: 48rem;"><%= log_entry.message %></td>
+        <td class="num"><%= log_entry.occurrence_count %></td>
+        <td><%= log_entry.analysis_status.humanize %></td>
+        <td class="text-secondary"><%= time_ago_in_words(log_entry.last_seen_at) %> ago</td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

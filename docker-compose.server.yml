@@ -1,0 +1,62 @@
+name: mylogsays-server
+
+services:
+  redis:
+    image: redis:8
+    container_name: mylogsays-server-redis
+    volumes:
+      - mylogsays-server-redis:/data
+    networks:
+      - mylogsays-server
+
+  web:
+    image: ghcr.io/romkey/mylogsays:latest
+    depends_on:
+      - redis
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      INFERENCE_URL: ${INFERENCE_URL}
+      INFERENCE_API_KEY: ${INFERENCE_API_KEY}
+      INFERENCE_MODEL: ${INFERENCE_MODEL:-log-analyzer}
+    ports:
+      - "3000:3000"
+    networks:
+      - mylogsays-server
+
+  sidekiq:
+    image: ghcr.io/romkey/mylogsays:latest
+    command: bundle exec sidekiq
+    depends_on:
+      - redis
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      INFERENCE_URL: ${INFERENCE_URL}
+      INFERENCE_API_KEY: ${INFERENCE_API_KEY}
+      INFERENCE_MODEL: ${INFERENCE_MODEL:-log-analyzer}
+    networks:
+      - mylogsays-server
+
+  migrate:
+    profiles: ["tools"]
+    image: ghcr.io/romkey/mylogsays:latest
+    command: ./bin/rails db:migrate
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+    networks:
+      - mylogsays-server
+
+volumes:
+  mylogsays-server-redis:
+
+networks:
+  mylogsays-server:
+    name: mylogsays-server

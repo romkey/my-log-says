@@ -1,0 +1,30 @@
+---
+description: PostgreSQL database and migration conventions
+globs: "db/migrate/**/*.rb"
+alwaysApply: false
+---
+
+# Database and Migrations
+
+- **Database:** PostgreSQL 18
+- **Adapter:** `pg` gem with connection via `DATABASE_URL` or individual `DB_HOST`/`DB_PORT`/`DB_USERNAME`/`DB_PASSWORD` env vars
+
+## Migration Conventions
+
+- Always provide a reversible migration or implement both `up` and `down` methods
+- Use `add_index` for columns used in `WHERE`, `ORDER BY`, or `JOIN` clauses
+- Use `add_reference` with `foreign_key: true` for associations
+- Prefer `change_column_null` over allowing nullable columns by default — be explicit
+- Use PostgreSQL-specific types when beneficial: `jsonb` for raw Docker payloads, `citext` for case-insensitive text, `uuid` for external IDs
+- Log entries must have a unique fingerprint index so duplicates can be counted without re-analysis
+- Add `NOT NULL` constraints with defaults for new required columns on existing tables to avoid downtime
+
+```ruby
+# ✅ Safe addition of a required column to an existing table
+class AddStatusToMembers < ActiveRecord::Migration[8.0]
+  def change
+    add_column :members, :status, :string, null: false, default: 'active'
+    add_index :members, :status
+  end
+end
+```

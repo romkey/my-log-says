@@ -1,0 +1,20 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  host: <%= ENV.fetch("DB_HOST", "postgresql") %>
+  port: <%= ENV.fetch("DB_PORT", 5432) %>
+  username: <%= ENV.fetch("DB_USERNAME", "mylogsays") %>
+  password: <%= ENV.fetch("DB_PASSWORD", "mylogsays") %>
+
+development:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME", "mylogsays_development") %>
+
+test:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME", "mylogsays_test") %>
+
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>

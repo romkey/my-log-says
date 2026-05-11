@@ -1,0 +1,23 @@
+---
+description: Core Rails project conventions for the Docker log analyzer app
+alwaysApply: true
+---
+
+# MyLogSays Project Conventions
+
+- **Stack:** Rails 8.1.3, Ruby 3.3.11, PostgreSQL 18, Redis 8, Sidekiq 8.1.3
+- **Frontend:** Bootstrap 5.3.8 via cssbundling-rails, Stimulus, Turbo, importmap-rails
+- **Product:** Collect Docker container logs, deduplicate them, and analyze each unique entry with an LLM inference server
+- **Testing:** Minitest with fixtures, Capybara + Selenium for system tests
+- **Linting:** RuboCop with rubocop-rails plugin — run via `docker compose -f docker-compose.lint.yml run --rm rubocop`
+- **Local dev:** Use compose files: `docker-compose.dev.yml`, `docker-compose.test.yml`, `docker-compose.lint.yml` (see README)
+- **CI:** GitHub Actions run Docker-based tests and lint on PRs; releases build and push to `ghcr.io` on version tags
+
+## Key Architectural Patterns
+
+- Service objects live in `app/services/`; keep log ingestion, deduplication, Docker import, and inference API logic out of controllers
+- Duplicate log entries must increment `occurrence_count` and must not enqueue another LLM analysis
+- Inference configuration comes from `.env` / environment variables (`INFERENCE_URL`, `INFERENCE_API_KEY`, `INFERENCE_MODEL`)
+- Background jobs use Sidekiq with sidekiq-cron; use plain queue names (no `queue_name_prefix`)
+- Pagination uses Pagy with Bootstrap nav helpers
+- Environment config via dotenv-rails (`.env` files)

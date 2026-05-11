@@ -1,0 +1,97 @@
+name: mylogsays-dev
+
+services:
+  postgresql:
+    image: postgres:18
+    container_name: mylogsays-dev-postgresql
+    environment:
+      POSTGRES_DB: mylogsays_development
+      POSTGRES_USER: mylogsays
+      POSTGRES_PASSWORD: mylogsays
+    ports:
+      - "15432:5432"
+    volumes:
+      - mylogsays-dev-postgresql:/var/lib/postgresql/data
+    networks:
+      - mylogsays-dev
+
+  redis:
+    image: redis:8
+    container_name: mylogsays-dev-redis
+    ports:
+      - "16379:6379"
+    volumes:
+      - mylogsays-dev-redis:/data
+    networks:
+      - mylogsays-dev
+
+  web:
+    image: ruby:3.3.11
+    working_dir: /rails
+    command: bash -lc "bundle check || bundle install; ./bin/rails server -b 0.0.0.0"
+    depends_on:
+      - postgresql
+      - redis
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_HOST: postgresql
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/rails
+      - mylogsays-dev-bundle:/usr/local/bundle
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - mylogsays-dev
+
+  sidekiq:
+    image: ruby:3.3.11
+    working_dir: /rails
+    command: bash -lc "bundle check || bundle install; bundle exec sidekiq"
+    depends_on:
+      - postgresql
+      - redis
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_HOST: postgresql
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/rails
+      - mylogsays-dev-bundle:/usr/local/bundle
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - mylogsays-dev
+
+  migrate:
+    profiles: ["tools"]
+    image: ruby:3.3.11
+    working_dir: /rails
+    command: bash -lc "bundle check || bundle install; ./bin/rails db:prepare"
+    depends_on:
+      - postgresql
+      - redis
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_HOST: postgresql
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/rails
+      - mylogsays-dev-bundle:/usr/local/bundle
+    networks:
+      - mylogsays-dev
+
+volumes:
+  mylogsays-dev-postgresql:
+  mylogsays-dev-redis:
+  mylogsays-dev-bundle:
+
+networks:
+  mylogsays-dev:
+    name: mylogsays-dev

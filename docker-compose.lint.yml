@@ -1,0 +1,19 @@
+name: mylogsays-lint
+
+services:
+  rubocop:
+    image: ruby:3.3.11
+    working_dir: /rails
+    command: bash -lc "bundle check || bundle install; bundle exec rubocop"
+    volumes:
+      - .:/rails
+      - mylogsays-lint-bundle:/usr/local/bundle
+    networks:
+      - mylogsays-lint
+
+volumes:
+  mylogsays-lint-bundle:
+
+networks:
+  mylogsays-lint:
+    name: mylogsays-lint

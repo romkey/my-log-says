@@ -1,0 +1,39 @@
+---
+description: Docker and GitHub Actions CI/CD conventions
+globs: "{Dockerfile,docker-compose.*.yml,.github/workflows/**}"
+alwaysApply: false
+---
+
+# Docker and CI
+
+## Docker
+
+- **Production image:** `Dockerfile` uses `ruby:3.3.11-slim` with a multi-stage build and a non-root `rails` user.
+- **Dev/test/lint tools:** Use the official `ruby:3.3.11` image directly in Compose. Do not bake the app Gemfile into test or lint images.
+- **Dependencies:** Dev/test/lint commands must run `bundle check || bundle install` against a cached Bundler volume so Gemfile changes do not require image rebuilds.
+- **Assets:** Production images precompile assets with `SECRET_KEY_BASE_DUMMY=1`.
+
+## docker-compose (split stacks)
+
+Use `-f docker-compose.<stack>.yml`; each stack sets a top-level `name:` and explicit network names prefixed with `mylogsays-` so volumes and networks do not collide across stacks. PostgreSQL and Redis container, volume, and network names must also use the `mylogsays-` prefix.
+
+| File | Purpose |
+|------|---------|
+| `docker-compose.dev.yml` | Local dev: official Ruby image + PostgreSQL 18 + Redis 8 + `web` + `sidekiq` (bind-mounted app). Network names are prefixed with `mylogsays-`. |
+| `docker-compose.test.yml` | Tests: official Ruby image, bind-mounted app, cached Bundler volume; Postgres + Redis + `test` service. |
+| `docker-compose.lint.yml` | RuboCop: official Ruby image, bind-mounted app, cached Bundler volume; no Postgres service. |
+| `docker-compose.server.yml` | Prod/staging-style: **no** Postgres service; set `DATABASE_URL` (or DB\_\* ) for external DB. Includes Redis for Sidekiq unless `REDIS_URL` points elsewhere. |
+
+- **Dev migrate:** `docker compose -f docker-compose.dev.yml --profile tools run --rm migrate`
+- **Tests:** `docker compose -f docker-compose.test.yml run --rm test` — installs changed gems into the cached bundle volume and recreates the test DB before each run
+- **Lint:** `docker compose -f docker-compose.lint.yml run --rm rubocop`
+- **Server migrate:** `docker compose -f docker-compose.server.yml --profile tools run --rm migrate`
+
+Dev/test/lint bind-mount the repo at `/rails`; server uses the built production image only.
+
+## GitHub Actions
+
+- **ci.yml:** Runs Docker-based tests and lint on pull requests and feature branch pushes; targets PostgreSQL 18 and Redis 8 through compose
+- **docker-publish.yml:** Builds and pushes the Docker image to `ghcr.io` on push with branch, tag, and SHA tags
+- Uses `ruby/setup-ruby` with bundler-cache and `actions/setup-node` with yarn cache
+- Concurrency: cancels in-progress runs for the same ref

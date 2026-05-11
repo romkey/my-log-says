@@ -1,0 +1,12 @@
+/.bundle
+/.env
+/.env.*
+!/\.env.example
+/coverage
+/log/*
+/node_modules
+/storage/*
+/tmp/*
+!/log/.keep
+!/storage/.keep
+!/tmp/.keep
