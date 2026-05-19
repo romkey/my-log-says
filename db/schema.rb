@@ -14,7 +14,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_000100) do
     t.datetime "analyzed_at"
     t.string "classification"
     t.string "urgency"
-    t.boolean "needs_action"
+    t.boolean "needs_action", default: false, null: false
     t.jsonb "fixes", default: [], null: false
     t.jsonb "other_suggestions", default: [], null: false
     t.jsonb "raw_payload", default: {}, null: false

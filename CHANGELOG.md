@@ -4,6 +4,13 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-05-19
+
+### Fixed
+
+- RuboCop offenses in the analyzer, analysis parser, and structured analysis migration.
+- Analysis parser handling of responses nested under an `analysis` key.
+
 ## [0.2.0] - 2026-05-19
 
 ### Added

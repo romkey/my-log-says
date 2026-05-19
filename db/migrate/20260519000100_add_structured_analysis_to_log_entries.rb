@@ -1,14 +1,16 @@
 # frozen_string_literal: true
 
+# Adds structured LLM analysis columns and removes legacy free-text analysis.
 class AddStructuredAnalysisToLogEntries < ActiveRecord::Migration[8.1]
   def change
-    remove_column :log_entries, :analysis, :text
-
-    add_column :log_entries, :classification, :string
-    add_column :log_entries, :urgency, :string
-    add_column :log_entries, :needs_action, :boolean
-    add_column :log_entries, :fixes, :jsonb, null: false, default: []
-    add_column :log_entries, :other_suggestions, :jsonb, null: false, default: []
+    change_table :log_entries, bulk: true do |t|
+      t.remove :analysis, type: :text
+      t.string :classification
+      t.string :urgency
+      t.boolean :needs_action, default: false, null: false
+      t.jsonb :fixes, null: false, default: []
+      t.jsonb :other_suggestions, null: false, default: []
+    end
 
     add_index :log_entries, :classification
     add_index :log_entries, :needs_action

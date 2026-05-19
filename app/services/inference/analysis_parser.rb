@@ -32,17 +32,18 @@ module Inference
     attr_reader :data
 
     def extract_payload
-      analysis = data['analysis']
-      payload = if analysis.is_a?(Hash)
-                  analysis
-                elsif analysis.is_a?(String)
-                  JSON.parse(analysis)
-                elsif data.key?('classification')
-                  data
-                end
+      payload = parse_analysis_field(data['analysis'])
+      payload = data if payload.nil? && data.key?('classification')
       payload or raise_error('Response is missing structured analysis fields')
     rescue JSON::ParserError => e
       raise Client::Error, "Inference analysis is not valid JSON: #{e.message}"
+    end
+
+    def parse_analysis_field(analysis)
+      return analysis if analysis.is_a?(Hash)
+      return JSON.parse(analysis) if analysis.is_a?(String)
+
+      nil
     end
 
     def validate_keys!(payload)
@@ -72,18 +73,17 @@ module Inference
     end
 
     def normalize_string_list(value, key:)
-      items = case value
-              when Array
-                value
-              when String
-                value.blank? ? [] : [value]
-              when nil
-                []
-              else
-                raise Client::Error, "Inference #{key} must be an array of strings"
-              end
+      coerce_string_list(value, key).map { |item| item.to_s.strip }.compact_blank
+    end
 
-      items.map { |item| item.to_s.strip }.reject(&:blank?)
+    def coerce_string_list(value, key)
+      case value
+      when Array then value
+      when String then value.blank? ? [] : [value]
+      when nil then []
+      else
+        raise Client::Error, "Inference #{key} must be an array of strings"
+      end
     end
 
     def raise_error(message)

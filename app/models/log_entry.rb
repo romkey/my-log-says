@@ -12,7 +12,7 @@ class LogEntry < ApplicationRecord
   validates :occurrence_count, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
   validates :classification, inclusion: { in: CLASSIFICATIONS }, allow_nil: true
   validates :urgency, inclusion: { in: URGENCIES }, allow_nil: true
-  validates :needs_action, inclusion: { in: [true, false] }, allow_nil: true
+  validates :needs_action, inclusion: { in: [true, false] }
 
   scope :recent, -> { order(last_seen_at: :desc, created_at: :desc) }
   scope :needs_analysis, -> { where(analysis_status: %w[pending failed]) }
