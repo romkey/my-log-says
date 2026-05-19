@@ -15,11 +15,11 @@ alwaysApply: false
 
 ## docker-compose (split stacks)
 
-Use `-f docker-compose.<stack>.yml`; each stack sets a top-level `name:` and explicit network names prefixed with `mylogsays-` so volumes and networks do not collide across stacks. PostgreSQL and Redis container, volume, and network names must also use the `mylogsays-` prefix.
+Use `-f docker-compose.<stack>.yml`; each stack sets a top-level `name:` and explicit network names prefixed with `loglady-` so volumes and networks do not collide across stacks. PostgreSQL and Redis container, volume, and network names must also use the `loglady-` prefix.
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.dev.yml` | Local dev: official Ruby image + PostgreSQL 18 + Redis 8 + `web` + `sidekiq` (bind-mounted app). Network names are prefixed with `mylogsays-`. |
+| `docker-compose.dev.yml` | Local dev: official Ruby image + PostgreSQL 18 + Redis 8 + `web` + `sidekiq` (bind-mounted app). Network names are prefixed with `loglady-`. |
 | `docker-compose.test.yml` | Tests: official Ruby image, bind-mounted app, cached Bundler volume; Postgres + Redis + `test` service. |
 | `docker-compose.lint.yml` | RuboCop: official Ruby image, bind-mounted app, cached Bundler volume; no Postgres service. |
 | `docker-compose.server.yml` | Prod/staging-style: **no** Postgres service; set `DATABASE_URL` (or DB\_\* ) for external DB. Includes Redis for Sidekiq unless `REDIS_URL` points elsewhere. |

@@ -1,4 +1,4 @@
-name: mylogsays-lint
+name: loglady-lint
 
 services:
   rubocop:
@@ -7,13 +7,13 @@ services:
     command: bash -lc "bundle check || bundle install; bundle exec rubocop"
     volumes:
       - .:/rails
-      - mylogsays-lint-bundle:/usr/local/bundle
+      - loglady-lint-bundle:/usr/local/bundle
     networks:
-      - mylogsays-lint
+      - loglady-lint
 
 volumes:
-  mylogsays-lint-bundle:
+  loglady-lint-bundle:
 
 networks:
-  mylogsays-lint:
-    name: mylogsays-lint
+  loglady-lint:
+    name: loglady-lint

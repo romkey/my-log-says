@@ -1,25 +1,25 @@
-name: mylogsays-test
+name: loglady-test
 
 services:
   postgresql:
     image: postgres:18
-    container_name: mylogsays-test-postgresql
+    container_name: loglady-test-postgresql
     environment:
-      POSTGRES_DB: mylogsays_test
-      POSTGRES_USER: mylogsays
-      POSTGRES_PASSWORD: mylogsays
+      POSTGRES_DB: loglady_test
+      POSTGRES_USER: loglady
+      POSTGRES_PASSWORD: loglady
     volumes:
-      - mylogsays-test-postgresql:/var/lib/postgresql
+      - loglady-test-postgresql:/var/lib/postgresql
     networks:
-      - mylogsays-test
+      - loglady-test
 
   redis:
     image: redis:8
-    container_name: mylogsays-test-redis
+    container_name: loglady-test-redis
     volumes:
-      - mylogsays-test-redis:/data
+      - loglady-test-redis:/data
     networks:
-      - mylogsays-test
+      - loglady-test
 
   test:
     image: ruby:3.3.11
@@ -31,23 +31,23 @@ services:
     environment:
       RAILS_ENV: test
       DB_HOST: postgresql
-      DB_NAME: mylogsays_test
-      DB_USERNAME: mylogsays
-      DB_PASSWORD: mylogsays
+      DB_NAME: loglady_test
+      DB_USERNAME: loglady
+      DB_PASSWORD: loglady
       REDIS_URL: redis://redis:6379/1
       INFERENCE_URL: https://example.test/analyze
       INFERENCE_API_KEY: test-key
     volumes:
       - .:/rails
-      - mylogsays-test-bundle:/usr/local/bundle
+      - loglady-test-bundle:/usr/local/bundle
     networks:
-      - mylogsays-test
+      - loglady-test
 
 volumes:
-  mylogsays-test-postgresql:
-  mylogsays-test-redis:
-  mylogsays-test-bundle:
+  loglady-test-postgresql:
+  loglady-test-redis:
+  loglady-test-bundle:
 
 networks:
-  mylogsays-test:
-    name: mylogsays-test
+  loglady-test:
+    name: loglady-test

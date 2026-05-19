@@ -19,12 +19,14 @@ module Inference
       endpoint: ENV.fetch('INFERENCE_URL', nil),
       api_key: ENV.fetch('INFERENCE_API_KEY', nil),
       model: ENV.fetch('INFERENCE_MODEL', DEFAULT_MODEL),
-      timeout: ENV.fetch('INFERENCE_TIMEOUT_SECONDS', 30).to_i
+      timeout: ENV.fetch('INFERENCE_TIMEOUT_SECONDS', 30).to_i,
+      prompt: Prompt.resolve
     )
       @endpoint = endpoint
       @api_key = api_key
       @model = model
       @timeout = timeout
+      @prompt = prompt
     end
 
     def analyze(log_entry)
@@ -33,18 +35,19 @@ module Inference
       response = http.request(request_for(log_entry))
       raise_response_error!(response)
 
-      parse_body(response).fetch('analysis')
+      AnalysisParser.parse(parse_body(response))
     rescue JSON::ParserError => e
       raise Error, "Inference server returned invalid JSON: #{e.message}"
     end
 
     private
 
-    attr_reader :endpoint, :api_key, :model, :timeout
+    attr_reader :endpoint, :api_key, :model, :timeout, :prompt
 
     def validate_configuration!
       raise ConfigurationError, 'INFERENCE_URL is required' if endpoint.blank?
       raise ConfigurationError, 'INFERENCE_API_KEY is required' if api_key.blank?
+      raise ConfigurationError, 'INFERENCE_PROMPT is required' if prompt.blank?
     end
 
     def raise_response_error!(response)
@@ -78,6 +81,7 @@ module Inference
     def payload_for(log_entry)
       {
         model: model,
+        prompt: prompt,
         log_entry: log_entry_payload(log_entry)
       }
     end

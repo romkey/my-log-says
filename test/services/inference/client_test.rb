@@ -23,5 +23,19 @@ module Inference
 
       assert_equal 'INFERENCE_API_KEY is required', error.message
     end
+
+    test 'requires prompt configuration' do
+      client = Client.new(
+        endpoint: 'https://example.test/analyze',
+        api_key: 'secret',
+        prompt: ''
+      )
+
+      error = assert_raises Client::ConfigurationError do
+        client.analyze(log_entries(:pending_warning))
+      end
+
+      assert_equal 'INFERENCE_PROMPT is required', error.message
+    end
   end
 end

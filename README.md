@@ -1,6 +1,6 @@
-# MyLogSays
+# LogLady
 
-MyLogSays collects Docker container logs, stores unique log entries in PostgreSQL, and sends each unique entry to an inference server for LLM analysis. Duplicate log lines are counted on the original record and are not analyzed again.
+LogLady collects Docker container logs, stores unique log entries in PostgreSQL, and sends each unique entry to an inference server for LLM analysis. Duplicate log lines are counted on the original record and are not analyzed again.
 
 ## Requirements
 
@@ -20,6 +20,8 @@ INFERENCE_API_KEY=your-api-key
 INFERENCE_MODEL=log-analyzer
 ```
 
+By default the LLM prompt comes from `config/inference_prompt.example.txt`. Override it with `INFERENCE_PROMPT` (inline) or `INFERENCE_PROMPT_FILE` (path to a text file). The inference server should return JSON with `classification`, `urgency`, `needs_action`, `fixes`, and `other_suggestions` — see the example prompt for the expected schema.
+
 Do not commit `.env`; API keys and production secrets must live outside the repository.
 
 ## Running Locally
@@ -36,7 +38,7 @@ Prepare the database:
 docker compose -f docker-compose.dev.yml --profile tools run --rm migrate
 ```
 
-The app listens on `http://localhost:3000`. The dev PostgreSQL and Redis containers use the `mylogsays-` prefix and host ports `15432` and `16379` so they do not collide with other projects.
+The app listens on `http://localhost:3000`. The dev PostgreSQL and Redis containers use the `loglady-` prefix and host ports `15432` and `16379` so they do not collide with other projects.
 
 The dev, test, and lint stacks use the official `ruby:3.3.11` image with this repository bind-mounted into the container. They run `bundle check || bundle install` against a cached Bundler volume, so Gemfile changes do not require rebuilding a tool image.
 

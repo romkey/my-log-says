@@ -21,4 +21,11 @@ class LogEntryTest < ActiveSupport::TestCase
 
     assert_not entry.valid?
   end
+
+  test 'requires known classification when set' do
+    entry = log_entries(:analyzed_error)
+    entry.classification = 'unknown'
+
+    assert_not entry.valid?
+  end
 end

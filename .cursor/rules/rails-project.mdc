@@ -3,7 +3,7 @@ description: Core Rails project conventions for the Docker log analyzer app
 alwaysApply: true
 ---
 
-# MyLogSays Project Conventions
+# LogLady Project Conventions
 
 - **Stack:** Rails 8.1.3, Ruby 3.3.11, PostgreSQL 18, Redis 8, Sidekiq 8.1.3
 - **Frontend:** Bootstrap 5.3.8 via cssbundling-rails, Stimulus, Turbo, importmap-rails
