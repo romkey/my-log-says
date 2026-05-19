@@ -21,6 +21,7 @@ services:
       INFERENCE_URL: ${INFERENCE_URL}
       INFERENCE_API_KEY: ${INFERENCE_API_KEY}
       INFERENCE_MODEL: ${INFERENCE_MODEL:-log-analyzer}
+      INFERENCE_FALLBACK_MODEL: ${INFERENCE_FALLBACK_MODEL:-}
     ports:
       - "3000:3000"
     networks:
@@ -39,6 +40,7 @@ services:
       INFERENCE_URL: ${INFERENCE_URL}
       INFERENCE_API_KEY: ${INFERENCE_API_KEY}
       INFERENCE_MODEL: ${INFERENCE_MODEL:-log-analyzer}
+      INFERENCE_FALLBACK_MODEL: ${INFERENCE_FALLBACK_MODEL:-}
     networks:
       - loglady-server
 

@@ -7,5 +7,9 @@ Rails.application.routes.draw do
     post :analyze, on: :member
   end
 
+  resource :settings, only: %i[show update] do
+    post :restore_default
+  end
+
   get 'up', to: 'rails/health#show', as: :rails_health_check
 end

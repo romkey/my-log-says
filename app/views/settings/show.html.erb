@@ -1,0 +1,38 @@
+<div class="d-flex align-items-end justify-content-between mb-3">
+  <div>
+    <div class="text-13 mb-1"><%= link_to "Log entries", root_path %></div>
+    <h1 class="h-page-title mb-0">Settings</h1>
+    <div class="text-13 text-secondary mt-1">Inference prompt sent with each log analysis</div>
+  </div>
+</div>
+
+<%= form_with model: @setting, url: settings_path, method: :patch do |form| %>
+  <section class="card mb-3">
+    <div class="card-body">
+      <h2 class="h-section-label">LLM prompt</h2>
+      <p class="text-13 text-secondary mb-2">
+        Instructions for the inference server. The model should return JSON with
+        <code>classification</code>, <code>urgency</code>, <code>needs_action</code>,
+        <code>fixes</code>, and <code>other_suggestions</code>.
+      </p>
+      <% if ENV["INFERENCE_PROMPT"].present? %>
+        <p class="text-13 text-warning mb-2">
+          <code>INFERENCE_PROMPT</code> is set in the environment and overrides this value until removed.
+        </p>
+      <% end %>
+      <%= form.text_area :inference_prompt,
+            rows: 24,
+            class: "form-control form-control-sm font-monospace",
+            spellcheck: false %>
+    </div>
+  </section>
+
+  <div class="d-flex gap-2">
+    <%= form.submit "Save prompt", class: "btn btn-primary btn-sm" %>
+    <%= button_to "Restore example prompt",
+          restore_default_settings_path,
+          method: :post,
+          class: "btn btn-outline-secondary btn-sm",
+          form: { data: { turbo_confirm: "Replace the current prompt with the shipped example?" } } %>
+  </div>
+<% end %>

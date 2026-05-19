@@ -10,8 +10,18 @@ module Inference
       end
     end
 
-    test 'falls back to example prompt file' do
+    test 'uses inference prompt stored in the database' do
+      with_env('INFERENCE_PROMPT' => nil) do
+        inference_settings(:default).update!(inference_prompt: 'Stored prompt with classification.')
+
+        assert_equal 'Stored prompt with classification.', Prompt.resolve
+      end
+    end
+
+    test 'falls back to example prompt file when database is empty' do
       with_env('INFERENCE_PROMPT' => nil, 'INFERENCE_PROMPT_FILE' => nil) do
+        InferenceSetting.delete_all
+
         assert_includes Prompt.resolve, 'classification'
       end
     end

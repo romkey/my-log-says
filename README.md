@@ -18,9 +18,12 @@ Copy `.env.example` to `.env` and set the inference server values:
 INFERENCE_URL=https://your-inference-server.example/analyze
 INFERENCE_API_KEY=your-api-key
 INFERENCE_MODEL=log-analyzer
+INFERENCE_FALLBACK_MODEL=backup-model
 ```
 
-By default the LLM prompt comes from `config/inference_prompt.example.txt`. Override it with `INFERENCE_PROMPT` (inline) or `INFERENCE_PROMPT_FILE` (path to a text file). The inference server should return JSON with `classification`, `urgency`, `needs_action`, `fixes`, and `other_suggestions` — see the example prompt for the expected schema.
+Set `INFERENCE_FALLBACK_MODEL` to retry analysis with a second model when the server reports the primary model is unavailable (HTTP 404/410, or 400/422/503 with a model-related error).
+
+Edit the LLM prompt at **Settings** in the running app (stored in the database). On first boot, the app seeds from `config/inference_prompt.example.txt`. Override with `INFERENCE_PROMPT` (inline) or `INFERENCE_PROMPT_FILE` (path) in the environment if needed. The inference server should return JSON with `classification`, `urgency`, `needs_action`, `fixes`, and `other_suggestions` — see the example prompt for the expected schema.
 
 Do not commit `.env`; API keys and production secrets must live outside the repository.
 

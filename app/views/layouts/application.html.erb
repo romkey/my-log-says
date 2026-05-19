@@ -8,9 +8,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   </head>
   <body>
+    <nav class="navbar navbar-dark border-bottom border-secondary-subtle mb-0">
+      <div class="container">
+        <span class="navbar-brand text-13">LogLady</span>
+        <div class="d-flex gap-3 text-13">
+          <%= link_to "Log entries", root_path, class: "link-light" %>
+          <%= link_to "Settings", settings_path, class: "link-light" %>
+        </div>
+      </div>
+    </nav>
     <main class="container py-4">
       <% if notice.present? %>
         <div class="alert alert-success"><%= notice %></div>
+      <% end %>
+      <% if alert.present? %>
+        <div class="alert alert-danger"><%= alert %></div>
       <% end %>
       <%= yield %>
     </main>

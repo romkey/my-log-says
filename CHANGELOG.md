@@ -4,6 +4,17 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-05-19
+
+### Added
+
+- Settings page to edit the inference prompt in the running app (stored in the database).
+- Optional `INFERENCE_FALLBACK_MODEL` to retry analysis when the primary model is unavailable.
+
+### Changed
+
+- Inference prompt resolution order: `INFERENCE_PROMPT` env, database, then example file.
+
 ## [0.2.1] - 2026-05-19
 
 ### Fixed
