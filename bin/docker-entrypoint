@@ -1,27 +1,12 @@
 #!/bin/bash -e
 
-should_prepare_database() {
-  if [ "${SKIP_DB_PREPARE:-false}" = "true" ]; then
-    return 1
-  fi
-
-  if [ "$1" = "./bin/rails" ] && [ "$2" = "server" ]; then
-    return 0
-  fi
-
-  if [ "$1" = "bundle" ] && [ "$2" = "exec" ] && [ "$3" = "sidekiq" ]; then
-    return 0
-  fi
-
-  return 1
-}
-
-if should_prepare_database "$@"; then
-  ./bin/rails db:prepare
-fi
-
 if [ "${1}" = "./bin/rails" ] && [ "${2}" = "server" ]; then
   rm -f /rails/tmp/pids/server.pid
+
+  if [ "${SKIP_DB_MIGRATE:-false}" != "true" ]; then
+    ./bin/rails db:create 2>/dev/null || true
+    ./bin/rails db:migrate
+  fi
 fi
 
 exec "$@"

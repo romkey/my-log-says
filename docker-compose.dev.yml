@@ -38,6 +38,12 @@ services:
     environment:
       DB_HOST: postgresql
       REDIS_URL: redis://redis:6379/0
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3000/up || exit 1']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
     ports:
       - "3000:3000"
     volumes:
@@ -52,8 +58,12 @@ services:
     working_dir: /rails
     command: bash -lc "bundle check || bundle install; exec ./bin/docker-entrypoint bundle exec sidekiq"
     depends_on:
-      - postgresql
-      - redis
+      postgresql:
+        condition: service_started
+      redis:
+        condition: service_started
+      web:
+        condition: service_healthy
     env_file:
       - path: .env
         required: false
