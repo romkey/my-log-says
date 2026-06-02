@@ -4,16 +4,16 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
   host: <%= ENV.fetch("DB_HOST", "postgresql") %>
   port: <%= ENV.fetch("DB_PORT", 5432) %>
-  username: <%= ENV.fetch("DB_USERNAME", "mylogsays") %>
-  password: <%= ENV.fetch("DB_PASSWORD", "mylogsays") %>
+  username: <%= ENV.fetch("DB_USERNAME", "loglady") %>
+  password: <%= ENV.fetch("DB_PASSWORD", "loglady") %>
 
 development:
   <<: *default
-  database: <%= ENV.fetch("DB_NAME", "mylogsays_development") %>
+  database: <%= ENV.fetch("DB_NAME", "loglady_development") %>
 
 test:
   <<: *default
-  database: <%= ENV.fetch("DB_NAME", "mylogsays_test") %>
+  database: <%= ENV.fetch("DB_NAME", "loglady_test") %>
 
 production:
   <<: *default

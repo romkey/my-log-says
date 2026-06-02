@@ -14,37 +14,63 @@ module Inference
     end
 
     DEFAULT_MODEL = 'log-analyzer'
+    MODEL_UNAVAILABLE_PATTERN = /model/i
 
-    def initialize(
-      endpoint: ENV.fetch('INFERENCE_URL', nil),
-      api_key: ENV.fetch('INFERENCE_API_KEY', nil),
-      model: ENV.fetch('INFERENCE_MODEL', DEFAULT_MODEL),
-      timeout: ENV.fetch('INFERENCE_TIMEOUT_SECONDS', 30).to_i
-    )
-      @endpoint = endpoint
-      @api_key = api_key
-      @model = model
-      @timeout = timeout
+    def initialize(**options)
+      @endpoint = options.fetch(:endpoint) { ENV.fetch('INFERENCE_URL', nil) }
+      @api_key = options.fetch(:api_key) { ENV.fetch('INFERENCE_API_KEY', nil) }
+      @model = options.fetch(:model) { ENV.fetch('INFERENCE_MODEL', DEFAULT_MODEL) }
+      @fallback_model = options.fetch(:fallback_model) { ENV['INFERENCE_FALLBACK_MODEL'].presence }
+      @timeout = options.fetch(:timeout) { ENV.fetch('INFERENCE_TIMEOUT_SECONDS', 30).to_i }
+      @prompt = options.fetch(:prompt) { Prompt.resolve }
     end
 
     def analyze(log_entry)
       validate_configuration!
 
-      response = http.request(request_for(log_entry))
-      raise_response_error!(response)
+      last_response = nil
+      models_for_attempt.each do |model_name|
+        last_response = perform_request(log_entry, model_name)
+        return AnalysisParser.parse(parse_body(last_response)) if last_response.is_a?(Net::HTTPSuccess)
 
-      parse_body(response).fetch('analysis')
+        raise_response_error!(last_response) unless retry_with_fallback?(last_response, model_name)
+      end
+
+      raise_response_error!(last_response)
     rescue JSON::ParserError => e
       raise Error, "Inference server returned invalid JSON: #{e.message}"
     end
 
     private
 
-    attr_reader :endpoint, :api_key, :model, :timeout
+    attr_reader :endpoint, :api_key, :model, :fallback_model, :timeout, :prompt
+
+    def models_for_attempt
+      @models_for_attempt ||= [model, fallback_model].compact.uniq
+    end
 
     def validate_configuration!
       raise ConfigurationError, 'INFERENCE_URL is required' if endpoint.blank?
       raise ConfigurationError, 'INFERENCE_API_KEY is required' if api_key.blank?
+      raise ConfigurationError, 'INFERENCE_PROMPT is required' if prompt.blank?
+    end
+
+    def perform_request(log_entry, model_name)
+      http.request(request_for(log_entry, model_name))
+    end
+
+    def retry_with_fallback?(response, model_name)
+      fallback_model.present? &&
+        model_name != models_for_attempt.last &&
+        model_unavailable?(response)
+    end
+
+    def model_unavailable?(response)
+      code = response.code.to_i
+      return true if [404, 410].include?(code)
+      return true if [400, 422, 503].include?(code) && response.body.match?(MODEL_UNAVAILABLE_PATTERN)
+
+      false
     end
 
     def raise_response_error!(response)
@@ -66,18 +92,19 @@ module Inference
       end
     end
 
-    def request_for(log_entry)
+    def request_for(log_entry, model_name)
       uri = URI(endpoint)
       Net::HTTP::Post.new(uri.request_uri).tap do |request|
         request['Authorization'] = "Bearer #{api_key}"
         request['Content-Type'] = 'application/json'
-        request.body = JSON.generate(payload_for(log_entry))
+        request.body = JSON.generate(payload_for(log_entry, model_name))
       end
     end
 
-    def payload_for(log_entry)
+    def payload_for(log_entry, model_name)
       {
-        model: model,
+        model: model_name,
+        prompt: prompt,
         log_entry: log_entry_payload(log_entry)
       }
     end

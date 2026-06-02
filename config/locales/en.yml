@@ -2,3 +2,9 @@ en:
   log_entries:
     analyze:
       queued: Analysis queued
+  settings:
+    update:
+      updated: Inference prompt saved.
+      invalid: Inference prompt cannot be blank.
+    restore_default:
+      restored: Inference prompt restored to the example.

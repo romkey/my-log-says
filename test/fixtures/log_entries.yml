@@ -7,7 +7,13 @@ analyzed_error:
   first_seen_at: <%= 5.minutes.ago %>
   last_seen_at: <%= 5.minutes.ago %>
   analysis_status: analyzed
-  analysis: "The web container could not connect to a dependency."
+  classification: connectivity
+  urgency: high
+  needs_action: true
+  fixes:
+    - "Verify the database host and port in the app environment."
+  other_suggestions:
+    - "Check recent deploys for dependency changes."
   raw_payload: {}
   created_at: <%= 5.minutes.ago %>
   updated_at: <%= 5.minutes.ago %>

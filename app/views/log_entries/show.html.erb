@@ -20,8 +20,39 @@
 <section class="card">
   <div class="card-body">
     <h2 class="h6">Analysis</h2>
-    <% if @log_entry.analysis.present? %>
-      <div><%= simple_format @log_entry.analysis %></div>
+    <% if @log_entry.analyzed? %>
+      <dl class="row mb-0 text-13">
+        <dt class="col-sm-3 text-secondary">Classification</dt>
+        <dd class="col-sm-9">
+          <span class="badge text-bg-secondary-subtle"><%= @log_entry.classification.humanize %></span>
+        </dd>
+        <dt class="col-sm-3 text-secondary">Urgency</dt>
+        <dd class="col-sm-9"><%= @log_entry.urgency.humanize %></dd>
+        <dt class="col-sm-3 text-secondary">Needs action</dt>
+        <dd class="col-sm-9">
+          <% if @log_entry.needs_action? %>
+            <span class="badge text-bg-warning-subtle">Yes</span>
+          <% else %>
+            <span class="text-secondary">No</span>
+          <% end %>
+        </dd>
+      </dl>
+      <% if @log_entry.fixes.present? %>
+        <h3 class="h-section-label mt-3 mb-2">Fixes</h3>
+        <ul class="mb-0 text-13">
+          <% @log_entry.fixes.each do |fix| %>
+            <li><%= fix %></li>
+          <% end %>
+        </ul>
+      <% end %>
+      <% if @log_entry.other_suggestions.present? %>
+        <h3 class="h-section-label mt-3 mb-2">Other suggestions</h3>
+        <ul class="mb-0 text-13">
+          <% @log_entry.other_suggestions.each do |suggestion| %>
+            <li><%= suggestion %></li>
+          <% end %>
+        </ul>
+      <% end %>
     <% elsif @log_entry.analysis_error.present? %>
       <div class="text-danger"><%= @log_entry.analysis_error %></div>
     <% else %>

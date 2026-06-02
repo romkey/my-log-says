@@ -3,7 +3,7 @@ description: Core Rails project conventions for the Docker log analyzer app
 alwaysApply: true
 ---
 
-# MyLogSays Project Conventions
+# LogLady Project Conventions
 
 - **Stack:** Rails 8.1.3, Ruby 3.3.11, PostgreSQL 18, Redis 8, Sidekiq 8.1.3
 - **Frontend:** Bootstrap 5.3.8 via cssbundling-rails, Stimulus, Turbo, importmap-rails
@@ -17,7 +17,7 @@ alwaysApply: true
 
 - Service objects live in `app/services/`; keep log ingestion, deduplication, Docker import, and inference API logic out of controllers
 - Duplicate log entries must increment `occurrence_count` and must not enqueue another LLM analysis
-- Inference configuration comes from `.env` / environment variables (`INFERENCE_URL`, `INFERENCE_API_KEY`, `INFERENCE_MODEL`)
+- Inference configuration comes from `.env` / environment variables (`INFERENCE_URL`, `INFERENCE_API_KEY`, `INFERENCE_MODEL`, optional `INFERENCE_FALLBACK_MODEL`)
 - Background jobs use Sidekiq with sidekiq-cron; use plain queue names (no `queue_name_prefix`)
 - Pagination uses Pagy with Bootstrap nav helpers
 - Environment config via dotenv-rails (`.env` files)

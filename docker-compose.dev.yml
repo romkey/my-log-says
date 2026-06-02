@@ -1,29 +1,29 @@
-name: mylogsays-dev
+name: loglady-dev
 
 services:
   postgresql:
     image: postgres:18
-    container_name: mylogsays-dev-postgresql
+    container_name: loglady-dev-postgresql
     environment:
-      POSTGRES_DB: mylogsays_development
-      POSTGRES_USER: mylogsays
-      POSTGRES_PASSWORD: mylogsays
+      POSTGRES_DB: loglady_development
+      POSTGRES_USER: loglady
+      POSTGRES_PASSWORD: loglady
     ports:
       - "15432:5432"
     volumes:
-      - mylogsays-dev-postgresql:/var/lib/postgresql/data
+      - loglady-dev-postgresql:/var/lib/postgresql/data
     networks:
-      - mylogsays-dev
+      - loglady-dev
 
   redis:
     image: redis:8
-    container_name: mylogsays-dev-redis
+    container_name: loglady-dev-redis
     ports:
       - "16379:6379"
     volumes:
-      - mylogsays-dev-redis:/data
+      - loglady-dev-redis:/data
     networks:
-      - mylogsays-dev
+      - loglady-dev
 
   web:
     image: ruby:3.3.11
@@ -42,10 +42,10 @@ services:
       - "3000:3000"
     volumes:
       - .:/rails
-      - mylogsays-dev-bundle:/usr/local/bundle
+      - loglady-dev-bundle:/usr/local/bundle
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - mylogsays-dev
+      - loglady-dev
 
   sidekiq:
     image: ruby:3.3.11
@@ -62,10 +62,10 @@ services:
       REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/rails
-      - mylogsays-dev-bundle:/usr/local/bundle
+      - loglady-dev-bundle:/usr/local/bundle
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - mylogsays-dev
+      - loglady-dev
 
   migrate:
     profiles: ["tools"]
@@ -83,15 +83,15 @@ services:
       REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/rails
-      - mylogsays-dev-bundle:/usr/local/bundle
+      - loglady-dev-bundle:/usr/local/bundle
     networks:
-      - mylogsays-dev
+      - loglady-dev
 
 volumes:
-  mylogsays-dev-postgresql:
-  mylogsays-dev-redis:
-  mylogsays-dev-bundle:
+  loglady-dev-postgresql:
+  loglady-dev-redis:
+  loglady-dev-bundle:
 
 networks:
-  mylogsays-dev:
-    name: mylogsays-dev
+  loglady-dev:
+    name: loglady-dev

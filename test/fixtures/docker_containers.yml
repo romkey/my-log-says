@@ -1,0 +1,18 @@
+web:
+  docker_id: cafebabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe
+  name: "web"
+  image: "web:latest"
+  state: "running"
+  import_status: "succeeded"
+  active: true
+  log_cursor_at: <%= 1.hour.ago.iso8601 %>
+  last_imported_at: <%= 10.minutes.ago.iso8601 %>
+
+missing:
+  docker_id: deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef
+  name: missing
+  image: "missing:latest"
+  state: "exited"
+  import_status: "failed"
+  import_error: "container not found"
+  active: false

@@ -15,17 +15,33 @@ module LogEntries
     def call
       return log_entry if log_entry.analyzed?
 
-      log_entry.update!(analysis_status: 'analyzing', analysis_error: nil)
-      analysis = client.analyze(log_entry)
-      log_entry.update!(analysis: analysis, analysis_status: 'analyzed', analyzed_at: Time.current)
-      log_entry
+      mark_analyzing!
+      save_success!(client.analyze(log_entry))
     rescue Inference::Client::Error => e
-      log_entry.update!(analysis_status: 'failed', analysis_error: e.message)
+      mark_failed!(e)
       raise
     end
 
     private
 
     attr_reader :log_entry, :client
+
+    def mark_analyzing!
+      log_entry.update!(analysis_status: 'analyzing', analysis_error: nil)
+    end
+
+    def save_success!(result)
+      log_entry.update!(
+        result.to_log_entry_attributes.merge(
+          analysis_status: 'analyzed',
+          analyzed_at: Time.current
+        )
+      )
+      log_entry
+    end
+
+    def mark_failed!(error)
+      log_entry.update!(analysis_status: 'failed', analysis_error: error.message)
+    end
   end
 end
