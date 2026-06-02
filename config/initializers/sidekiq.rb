@@ -4,7 +4,18 @@ redis_url = ENV.fetch('REDIS_URL', 'redis://redis:6379/0')
 
 Sidekiq.configure_server do |config|
   config.redis = { url: redis_url }
-  config.queues = %w[analysis ingestion default]
+  config.concurrency = SidekiqCapsuleConfig.thread_count('SIDEKIQ_DEFAULT_CONCURRENCY')
+  config.queues = %w[default]
+
+  config.capsule('analysis') do |cap|
+    cap.concurrency = SidekiqCapsuleConfig.thread_count('SIDEKIQ_ANALYSIS_CONCURRENCY')
+    cap.queues = %w[analysis]
+  end
+
+  config.capsule('ingestion') do |cap|
+    cap.concurrency = SidekiqCapsuleConfig.thread_count('SIDEKIQ_INGESTION_CONCURRENCY')
+    cap.queues = %w[ingestion]
+  end
 
   config.on(:startup) do
     if docker_log_sync_enabled?

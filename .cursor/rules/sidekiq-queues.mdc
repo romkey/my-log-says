@@ -32,12 +32,26 @@ In `config/initializers/sidekiq.rb`, use plain queue names only:
 # BAD
 config.queues = ["#{prefix}_default", "#{prefix}_mailers"]
 
-# GOOD
-config.queues = %w[analysis ingestion default]
+# GOOD — dedicated capsules run analysis and ingestion in parallel
+Sidekiq.configure_server do |config|
+  config.concurrency = 1
+  config.queues = %w[default]
+
+  config.capsule('analysis') do |cap|
+    cap.concurrency = 2
+    cap.queues = %w[analysis]
+  end
+
+  config.capsule('ingestion') do |cap|
+    cap.concurrency = 2
+    cap.queues = %w[ingestion]
+  end
+end
 ```
 
-`analysis` must come before `ingestion`. Sidekiq drains queues in order; if
-ingestion runs first, the recurring Docker log sync starves LLM analysis jobs.
+Tune thread counts with `SIDEKIQ_ANALYSIS_CONCURRENCY` and
+`SIDEKIQ_INGESTION_CONCURRENCY`. Do not rely on queue order alone — Sidekiq
+drains the first listed queue completely before moving to the next.
 
 ## sidekiq-cron jobs
 
