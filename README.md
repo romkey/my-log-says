@@ -79,11 +79,13 @@ docker compose -f docker-compose.dev.yml --profile tools run --rm migrate
 
 The app listens on `http://localhost:3000`. The dev PostgreSQL and Redis containers use the `loglady-` prefix and host ports `15432` and `16379` so they do not collide with other projects.
 
+Sidekiq discovers containers through the mounted Docker socket (`/var/run/docker.sock`), upserts them into the database, and imports their logs on a recurring schedule (default: every minute). Per-container import failures are recorded on the container record and do not stop other imports.
+
 The dev, test, and lint stacks use the official `ruby:3.3.11` image with this repository bind-mounted into the container. They run `bundle check || bundle install` against a cached Bundler volume, so Gemfile changes do not require rebuilding a tool image.
 
 ## Ingesting Logs
 
-Import recent Docker logs for a container:
+Log import runs automatically in Sidekiq when `DOCKER_LOG_SYNC_ENABLED=true` (the default). You can also import manually for one container:
 
 ```sh
 docker compose -f docker-compose.dev.yml run --rm web ./bin/rails docker_logs:import CONTAINER=container-name
@@ -113,12 +115,15 @@ docker compose -f docker-compose.lint.yml run --rm rubocop
 
 ## Architecture
 
+- `DockerContainer` tracks containers discovered from the Docker Engine API and import status.
 - `LogEntry` stores each unique log line, duplicate count, analysis status, and LLM output.
 - `LogEntries::Ingestor` creates new entries and counts duplicates.
-- `DockerLogs::Importer` reads Docker logs and sends them through the ingestor.
+- `DockerContainers::Synchronizer` lists containers via the Docker socket and upserts local records.
+- `DockerLogs::Importer` reads container logs through the Docker Engine API and sends them through the ingestor.
+- `SyncDockerContainersJob` and `ImportDockerLogsJob` run in Sidekiq on the `ingestion` queue (scheduled via sidekiq-cron).
 - `AnalyzeLogEntryJob` runs in Sidekiq on the `analysis` queue.
 - `Inference::Client` calls the configured inference server with the API key from the environment.
 
 ## CI and Images
 
-GitHub Actions runs Docker-based tests and linting. The Docker publish workflow builds and publishes an image to GitHub Container Registry on push, using branch, tag, and SHA tags.
+GitHub Actions runs Docker-based tests and linting. The Docker publish workflow builds and publishes an image to GitHub Container Registry on push: `latest` on `main` and `v*` release tags, `staging` on the `staging` branch, plus branch name, version tag, and commit SHA tags.

@@ -41,6 +41,8 @@ services:
       INFERENCE_API_KEY: ${INFERENCE_API_KEY}
       INFERENCE_MODEL: ${INFERENCE_MODEL:-log-analyzer}
       INFERENCE_FALLBACK_MODEL: ${INFERENCE_FALLBACK_MODEL:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - loglady-server
 

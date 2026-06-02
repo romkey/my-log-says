@@ -34,6 +34,6 @@ Dev/test/lint bind-mount the repo at `/rails`; server uses the built production 
 ## GitHub Actions
 
 - **ci.yml:** Runs Docker-based tests and lint on pull requests and feature branch pushes; targets PostgreSQL 18 and Redis 8 through compose
-- **docker-publish.yml:** Builds and pushes the Docker image to `ghcr.io` on push with branch, tag, and SHA tags
+- **docker-publish.yml:** Builds and pushes the Docker image to `ghcr.io` on push with `latest` (main and `v*` tags), `staging` (staging branch), plus branch, version tag, and SHA tags
 - Uses `ruby/setup-ruby` with bundler-cache and `actions/setup-node` with yarn cache
 - Concurrency: cancels in-progress runs for the same ref

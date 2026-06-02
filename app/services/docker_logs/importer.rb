@@ -1,74 +1,85 @@
 # frozen_string_literal: true
 
-require 'open3'
-
 module DockerLogs
-  # Reads Docker logs from a container and ingests each parsed log line.
+  # Reads Docker logs from a container via the Docker Engine API and ingests each parsed log line.
   class Importer
     class Error < StandardError
     end
 
-    Result = Data.define(:imported_count, :duplicate_count)
+    Result = Data.define(:imported_count, :duplicate_count, :line_errors, :log_cursor_at)
 
-    def self.call(container_name:, since: ENV.fetch('DOCKER_LOGS_SINCE', '10m'),
-                  command_runner: Open3.method(:capture3))
-      new(container_name: container_name, since: since, command_runner: command_runner).call
+    def self.call(docker_container:, client: Docker::Client.new, since: nil)
+      new(docker_container: docker_container, client: client, since: since).call
     end
 
-    def initialize(container_name:, since: ENV.fetch('DOCKER_LOGS_SINCE', '10m'),
-                   command_runner: Open3.method(:capture3))
-      @container_name = container_name
+    def initialize(docker_container:, client:, since: nil)
+      @docker_container = docker_container
+      @client = client
       @since = since
-      @command_runner = command_runner
     end
 
     def call
-      stdout, stderr, status = command_runner.call(*command)
-      raise Error, stderr.presence || "docker logs failed for #{container_name}" unless status.success?
-
-      import(stdout)
+      raw_logs = client.container_logs(docker_container.docker_id, since: import_since)
+      import(StreamDemuxer.call(raw_logs))
+    rescue Docker::Client::Error => e
+      raise Error, e.message
     end
 
     private
 
-    attr_reader :container_name, :since, :command_runner
+    attr_reader :docker_container, :client, :since
 
-    def command
-      ['docker', 'logs', '--timestamps', "--since=#{since}", container_name]
+    def import(entries)
+      duplicates = []
+      line_errors = []
+      log_cursor_at = docker_container.log_cursor_at
+
+      entries.each do |entry|
+        duplicate, log_cursor_at = process_entry(entry, line_errors, log_cursor_at)
+        duplicates << duplicate unless duplicate.nil?
+      end
+
+      build_result(duplicates, line_errors, log_cursor_at)
     end
 
-    def import(output)
-      duplicates = output.each_line.map { |line| import_line(line) }.compact
-
-      Result.new(imported_count: duplicates.length, duplicate_count: duplicates.count(true))
+    def process_entry(entry, line_errors, log_cursor_at)
+      duplicate = import_entry(entry, line_errors)
+      [duplicate, later_timestamp(log_cursor_at, entry.observed_at)]
     end
 
-    def import_line(line)
-      parsed = parse_line(line)
-      return if parsed[:message].blank?
+    def build_result(duplicates, line_errors, log_cursor_at)
+      Result.new(
+        imported_count: duplicates.length,
+        duplicate_count: duplicates.count(true),
+        line_errors: line_errors,
+        log_cursor_at: log_cursor_at
+      )
+    end
 
+    def import_entry(entry, line_errors)
       LogEntries::Ingestor.call(
-        source_container: container_name,
-        stream: 'docker',
-        message: parsed[:message],
-        observed_at: parsed[:observed_at],
-        raw_payload: { 'docker_timestamp' => parsed[:timestamp] }
+        source_container: docker_container.name,
+        stream: entry.stream,
+        message: entry.message,
+        observed_at: entry.observed_at,
+        raw_payload: { 'docker_timestamp' => entry.timestamp }
       ).duplicate
+    rescue StandardError => e
+      line_errors << e.message
+      nil
     end
 
-    def parse_line(line)
-      timestamp, message = line.strip.split(/\s+/, 2)
-      {
-        timestamp: timestamp,
-        observed_at: parse_timestamp(timestamp),
-        message: message.to_s
-      }
+    def import_since
+      return since if since
+      return docker_container.log_cursor_at if docker_container.log_cursor_at.present?
+
+      SinceParser.call(ENV.fetch('DOCKER_LOGS_SINCE', '10m'))
     end
 
-    def parse_timestamp(timestamp)
-      Time.zone.parse(timestamp)
-    rescue ArgumentError, TypeError
-      Time.current
+    def later_timestamp(current, candidate)
+      return candidate if current.nil? || candidate > current
+
+      current
     end
   end
 end

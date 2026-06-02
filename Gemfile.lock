@@ -112,6 +112,8 @@ GEM
     erubi (1.13.1)
     et-orbi (1.4.0)
       tzinfo
+    excon (1.4.2)
+      logger
     fugit (1.12.1)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
@@ -327,6 +329,7 @@ DEPENDENCIES
   capybara
   debug
   dotenv-rails
+  excon (~> 1.2)
   pg (~> 1.6)
   puma (>= 6.0)
   rails (= 8.1.3)

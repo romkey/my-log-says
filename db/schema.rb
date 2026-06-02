@@ -10,9 +10,27 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_02_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "docker_containers", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "docker_id", null: false
+    t.string "image"
+    t.text "import_error"
+    t.string "import_status", default: "idle", null: false
+    t.datetime "last_imported_at"
+    t.datetime "log_cursor_at"
+    t.string "name", null: false
+    t.string "state"
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_docker_containers_on_active"
+    t.index ["docker_id"], name: "index_docker_containers_on_docker_id", unique: true
+    t.index ["import_status"], name: "index_docker_containers_on_import_status"
+    t.index ["name"], name: "index_docker_containers_on_name"
+  end
 
   create_table "inference_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
