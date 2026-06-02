@@ -12,6 +12,7 @@ module LogLady
     config.load_defaults 8.1
 
     config.active_job.queue_adapter = :sidekiq
+    config.active_storage.variant_processor = :disabled
     config.autoload_lib(ignore: %w[assets tasks])
   end
 end

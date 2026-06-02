@@ -12,11 +12,8 @@ module Docker
     DEFAULT_SOCKET = '/var/run/docker.sock'
 
     def initialize(socket_path: ENV.fetch('DOCKER_SOCKET', DEFAULT_SOCKET))
-      @connection = Excon.new(
-        'http://docker',
-        socket: socket_path,
-        middlewares: Excon.defaults[:middlewares] - [Excon::Middleware::RedirectFollower]
-      )
+      @socket_path = socket_path
+      @connection = build_connection
     end
 
     def list_containers(all: true)
@@ -24,7 +21,7 @@ module Docker
     end
 
     def container_logs(id, **options)
-      response = connection.get(path: "/containers/#{id}/logs", query: log_query(options))
+      response = request(:get, "/containers/#{id}/logs", query: log_query(options))
       raise Error, error_message(response) unless response.status == 200
 
       response.body
@@ -32,7 +29,15 @@ module Docker
 
     private
 
-    attr_reader :connection
+    attr_reader :connection, :socket_path
+
+    def build_connection
+      Excon.new(
+        "unix://#{socket_path}",
+        socket: socket_path,
+        middlewares: Excon.defaults[:middlewares] - [Excon::Middleware::RedirectFollower]
+      )
+    end
 
     def log_query(options)
       query = {
@@ -47,10 +52,16 @@ module Docker
     end
 
     def get_json(path, query: {})
-      response = connection.get(path: path, query: query)
+      response = request(:get, path, query: query)
       raise Error, error_message(response) unless response.status == 200
 
       JSON.parse(response.body)
+    end
+
+    def request(method, path, query: {})
+      connection.request(method: method, path: path, query: query)
+    rescue Excon::Error => e
+      raise Error, e.message
     end
 
     def error_message(response)
