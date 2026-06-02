@@ -71,13 +71,7 @@ Start the development stack:
 docker compose -f docker-compose.dev.yml up
 ```
 
-Prepare the database:
-
-```sh
-docker compose -f docker-compose.dev.yml --profile tools run --rm migrate
-```
-
-The app listens on `http://localhost:3000`. The dev PostgreSQL and Redis containers use the `loglady-` prefix and host ports `15432` and `16379` so they do not collide with other projects.
+The app listens on `http://localhost:3000`. Web and Sidekiq run `db:prepare` automatically at startup (create the database if needed, then migrate). The dev PostgreSQL and Redis containers use the `loglady-` prefix and host ports `15432` and `16379` so they do not collide with other projects.
 
 Sidekiq discovers containers through the mounted Docker socket (`/var/run/docker.sock`), upserts them into the database, and imports their logs on a recurring schedule (default: every minute). Per-container import failures are recorded on the container record and do not stop other imports.
 
