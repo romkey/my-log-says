@@ -10,5 +10,7 @@ class SyncDockerContainersJob < ApplicationJob
     result.containers.find_each do |container|
       ImportDockerLogsJob.perform_later(container.id)
     end
+  rescue Docker::Client::Error => e
+    Rails.logger.error("[SyncDockerContainersJob] #{e.message}")
   end
 end

@@ -37,6 +37,7 @@ services:
         required: false
     environment:
       DB_HOST: postgresql
+      LOGLADY_COMPOSE_PROJECT: loglady-dev
       REDIS_URL: redis://redis:6379/0
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:3000/up || exit 1']
@@ -46,10 +47,11 @@ services:
       start_period: 60s
     ports:
       - "3000:3000"
+    labels:
+      loglady.io/skip-log-import: "true"
     volumes:
       - .:/rails
       - loglady-dev-bundle:/usr/local/bundle
-      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - loglady-dev
 
@@ -69,9 +71,12 @@ services:
         required: false
     environment:
       DB_HOST: postgresql
+      LOGLADY_COMPOSE_PROJECT: loglady-dev
       REDIS_URL: redis://redis:6379/0
     group_add:
       - "${DOCKER_GID:-999}"
+    labels:
+      loglady.io/skip-log-import: "true"
     volumes:
       - .:/rails
       - loglady-dev-bundle:/usr/local/bundle

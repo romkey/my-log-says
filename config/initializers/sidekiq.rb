@@ -4,7 +4,7 @@ redis_url = ENV.fetch('REDIS_URL', 'redis://redis:6379/0')
 
 Sidekiq.configure_server do |config|
   config.redis = { url: redis_url }
-  config.queues = %w[ingestion analysis default]
+  config.queues = %w[analysis ingestion default]
 
   config.on(:startup) do
     if docker_log_sync_enabled?

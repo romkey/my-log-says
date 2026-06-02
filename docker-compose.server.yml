@@ -15,6 +15,7 @@ services:
       - redis
     environment:
       RAILS_ENV: production
+      LOGLADY_COMPOSE_PROJECT: loglady-server
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
@@ -30,6 +31,8 @@ services:
       start_period: 30s
     ports:
       - "3000:3000"
+    labels:
+      loglady.io/skip-log-import: "true"
     networks:
       - loglady-server
 
@@ -43,6 +46,7 @@ services:
         condition: service_healthy
     environment:
       RAILS_ENV: production
+      LOGLADY_COMPOSE_PROJECT: loglady-server
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
@@ -52,6 +56,8 @@ services:
       INFERENCE_FALLBACK_MODEL: ${INFERENCE_FALLBACK_MODEL:-}
     group_add:
       - "${DOCKER_GID:-999}"
+    labels:
+      loglady.io/skip-log-import: "true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:

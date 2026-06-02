@@ -2,7 +2,7 @@
 
 # Tracks a Docker container discovered via the Docker Engine API for log import.
 class DockerContainer < ApplicationRecord
-  IMPORT_STATUSES = %w[idle importing succeeded failed].freeze
+  IMPORT_STATUSES = %w[idle importing succeeded failed excluded].freeze
 
   validates :docker_id, :name, presence: true
   validates :docker_id, uniqueness: true
@@ -10,7 +10,7 @@ class DockerContainer < ApplicationRecord
   validates :active, inclusion: { in: [true, false] }
 
   scope :active, -> { where(active: true) }
-  scope :importable, -> { active.where.not(state: nil) }
+  scope :importable, -> { active.where.not(import_status: 'excluded') }
 
   def mark_importing!
     update!(import_status: 'importing', import_error: nil)

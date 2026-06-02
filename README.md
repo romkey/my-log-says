@@ -73,7 +73,7 @@ docker compose -f docker-compose.dev.yml up
 
 The app listens on `http://localhost:3000`. Web runs `db:migrate` once at startup; Sidekiq waits for Web to pass its health check before starting, so migrations never run concurrently. The dev PostgreSQL and Redis containers use the `loglady-` prefix and host ports `15432` and `16379` so they do not collide with other projects.
 
-Sidekiq discovers containers through the mounted Docker socket (`/var/run/docker.sock`), upserts them into the database, and imports their logs on a recurring schedule (default: every minute). Set `DOCKER_GID` in `.env` to the host docker group GID (`stat -c '%g' /var/run/docker.sock` on Linux, `stat -f '%g'` on macOS) so the Sidekiq process can access the socket.
+Sidekiq discovers containers through the mounted Docker socket (`/var/run/docker.sock`), upserts them into the database, and imports their logs on a recurring schedule (default: every minute). LogLady skips its own containers (matching image/name patterns, compose project, or `loglady.io/skip-log-import` label) so it does not ingest Sidekiq's own job logs. Set `DOCKER_GID` in `.env` to the host docker group GID (`stat -c '%g' /var/run/docker.sock` on Linux, `stat -f '%g'` on macOS) so the Sidekiq process can access the socket.
 
 The dev, test, and lint stacks use the official `ruby:3.3.11` image with this repository bind-mounted into the container. They run `bundle check || bundle install` against a cached Bundler volume, so Gemfile changes do not require rebuilding a tool image.
 

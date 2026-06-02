@@ -11,7 +11,8 @@ class SyncDockerContainersJobTest < ActiveJob::TestCase
     DockerContainers::Synchronizer.define_singleton_method(:call) do
       DockerContainers::Synchronizer::Result.new(
         containers: DockerContainer.where(id: web.id),
-        deactivated_count: 0
+        deactivated_count: 0,
+        excluded_count: 0
       )
     end
 

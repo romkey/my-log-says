@@ -5,7 +5,11 @@ class LogEntriesController < ApplicationController
   protect_from_forgery with: :null_session, only: :create
 
   def index
-    @log_entries = LogEntry.recent.limit(100)
+    @excluded_containers = DockerContainer.where(import_status: 'excluded').pluck(:name)
+    @log_entries = LogEntry.recent
+    @log_entries = @log_entries.where.not(source_container: @excluded_containers) if @excluded_containers.any?
+    @log_entries = @log_entries.limit(100)
+    @analysis_counts = LogEntry.group(:analysis_status).count
   end
 
   def show

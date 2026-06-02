@@ -33,8 +33,11 @@ In `config/initializers/sidekiq.rb`, use plain queue names only:
 config.queues = ["#{prefix}_default", "#{prefix}_mailers"]
 
 # GOOD
-config.queues = %w[default mailers]
+config.queues = %w[analysis ingestion default]
 ```
+
+`analysis` must come before `ingestion`. Sidekiq drains queues in order; if
+ingestion runs first, the recurring Docker log sync starves LLM analysis jobs.
 
 ## sidekiq-cron jobs
 
