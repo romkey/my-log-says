@@ -5,19 +5,48 @@ require 'test_helper'
 class ApplicationHelperTest < ActionView::TestCase
   include ApplicationHelper
 
-  test 'filter chip links to analysis filter' do
-    html = log_entry_filter_chip(label: 'Analyzed', count: 5, filter: 'analyzed', active_filter: nil)
-
-    assert_includes html, log_entries_path(analysis: 'analyzed')
-    assert_includes html, 'Analyzed'
-    assert_includes html, '>5<'
+  def filters(**attrs)
+    LogEntries::Filters.new(base_scope: LogEntry.all, **attrs)
   end
 
-  test 'active filter chip includes active class' do
+  test 'filter chip links preserve stacked filters' do
     html = log_entry_filter_chip(
-      label: 'Failed', count: 2, filter: 'failed', active_filter: 'failed', variant: 'danger'
+      filters: filters(analysis: 'analyzed', container: 'web'),
+      facet: :severity,
+      value: 'high',
+      label: 'High',
+      count: 1
     )
 
-    assert_includes html, 'filter-chip active danger'
+    assert_includes html, 'severity=high'
+    assert_includes html, 'container=web'
+    assert_includes html, 'analysis=analyzed'
+  end
+
+  test 'active filter chip links toggle facet off' do
+    html = log_entry_filter_chip(
+      filters: filters(analysis: 'analyzed'),
+      facet: :analysis,
+      value: 'analyzed',
+      label: 'Analyzed',
+      count: 2
+    )
+
+    assert_includes html, log_entries_path
+    assert_not_includes html, 'analysis=analyzed'
+    assert_includes html, 'filter-chip active'
+  end
+
+  test 'severity label highlights high urgency' do
+    html = log_entry_severity_label(log_entries(:analyzed_error))
+
+    assert_includes html, 'High'
+    assert_includes html, 'text-bg-danger-subtle'
+  end
+
+  test 'severity label mutes missing urgency' do
+    html = log_entry_severity_label(log_entries(:pending_warning))
+
+    assert_includes html, '—'
   end
 end

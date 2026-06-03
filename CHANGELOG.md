@@ -4,6 +4,14 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.3.10] - 2026-06-03
+
+### Added
+
+- Stacked log entry filters: **Analysis**, **Container**, and **Severity** combine via query params.
+- Severity column on the log entries table.
+- Click an active filter chip again to remove that facet.
+
 ## [0.3.9] - 2026-06-03
 
 ### Added

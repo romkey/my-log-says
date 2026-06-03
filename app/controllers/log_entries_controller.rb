@@ -5,12 +5,13 @@ class LogEntriesController < ApplicationController
   protect_from_forgery with: :null_session, only: :create
 
   def index
-    @analysis_filter = analysis_filter_param
-    @analysis_counts = visible_log_entries.group(:analysis_status).count
-    @analyzed_count = @analysis_counts.fetch('analyzed', 0)
-    @failed_count = @analysis_counts.fetch('failed', 0)
-    @total_count = @analysis_counts.values.sum
-    @log_entries = filtered_log_entries.limit(100)
+    @filters = LogEntries::Filters.from_params(base_scope: visible_log_entries, params: params)
+    @total_count = visible_log_entries.count
+    @results_count = @filters.apply.count
+    @analysis_counts = @filters.analysis_counts
+    @container_counts = @filters.container_counts
+    @severity_counts = @filters.severity_counts
+    @log_entries = @filters.apply.recent.limit(100)
   end
 
   def show
@@ -35,11 +36,6 @@ class LogEntriesController < ApplicationController
 
   private
 
-  def analysis_filter_param
-    status = params.permit(:analysis)[:analysis].to_s.presence
-    status if status.in?(LogEntry::STATUSES)
-  end
-
   def excluded_containers
     @excluded_containers ||= DockerContainer.where(import_status: 'excluded').pluck(:name)
   end
@@ -50,12 +46,6 @@ class LogEntriesController < ApplicationController
       scope = scope.where.not(source_container: excluded_containers) if excluded_containers.any?
       scope
     end
-  end
-
-  def filtered_log_entries
-    scope = visible_log_entries.recent
-    scope = scope.with_analysis_status(@analysis_filter) if @analysis_filter
-    scope
   end
 
   def log_entry_params

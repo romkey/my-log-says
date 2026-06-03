@@ -44,3 +44,21 @@ failed_inference:
   raw_payload: {}
   created_at: <%= 3.minutes.ago %>
   updated_at: <%= 3.minutes.ago %>
+
+analyzed_info:
+  source_container: web
+  stream: stdout
+  message: "Health check OK"
+  fingerprint: "analyzed-info-fingerprint"
+  occurrence_count: 3
+  first_seen_at: <%= 10.minutes.ago %>
+  last_seen_at: <%= 1.minute.ago %>
+  analysis_status: analyzed
+  classification: informational
+  urgency: low
+  needs_action: false
+  fixes: []
+  other_suggestions: []
+  raw_payload: {}
+  created_at: <%= 10.minutes.ago %>
+  updated_at: <%= 1.minute.ago %>

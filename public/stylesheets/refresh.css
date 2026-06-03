@@ -64,6 +64,10 @@
   border-color: var(--bs-danger);
 }
 
+.filter-chip.warning.active {
+  border-color: var(--bs-warning);
+}
+
 .status-dot {
   border-radius: 50%;
   display: inline-block;

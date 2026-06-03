@@ -22,4 +22,18 @@ class LogEntryTest < ActiveSupport::TestCase
     assert_includes analyzed, log_entries(:analyzed_error)
     assert_not_includes analyzed, log_entries(:failed_inference)
   end
+
+  test 'with_container scope filters by source container' do
+    web_entries = LogEntry.with_container('web')
+
+    assert_includes web_entries, log_entries(:analyzed_error)
+    assert_not_includes web_entries, log_entries(:pending_warning)
+  end
+
+  test 'with_severity scope filters by urgency' do
+    high_entries = LogEntry.with_severity('high')
+
+    assert_includes high_entries, log_entries(:analyzed_error)
+    assert_not_includes high_entries, log_entries(:analyzed_info)
+  end
 end

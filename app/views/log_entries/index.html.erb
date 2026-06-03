@@ -1,16 +1,37 @@
 <div class="d-flex align-items-end justify-content-between mb-3">
-  <div>
+  <div class="w-100">
     <h1 class="h-page-title mb-0">Log entries</h1>
     <div class="text-13 text-secondary mt-1">
-      <span class="text-body"><%= @total_count %></span> unique
-      <% if @analysis_filter.present? %>
-        · <%= link_to "Clear filter", log_entries_path, class: "link-light" %>
+      <span class="text-body"><%= @results_count %></span> shown ·
+      <span class="text-body"><%= @total_count %></span> total
+      <% if @filters.active? %>
+        · <%= pluralize(@filters.active_count, "filter") %> active · <%= link_to "Clear", log_entries_path, class: "link-light" %>
       <% end %>
     </div>
-    <div class="d-flex flex-wrap gap-2 mt-2">
-      <%= log_entry_filter_chip(label: "Analyzed", count: @analyzed_count, filter: "analyzed", active_filter: @analysis_filter) %>
-      <%= log_entry_filter_chip(label: "Failed", count: @failed_count, filter: "failed", active_filter: @analysis_filter, variant: "danger") %>
+
+    <div class="h-section-label mt-3 mb-1">Analysis</div>
+    <div class="d-flex flex-wrap gap-2">
+      <%= log_entry_filter_chip(filters: @filters, facet: :analysis, value: "analyzed", label: "Analyzed", count: @analysis_counts.fetch("analyzed", 0)) %>
+      <%= log_entry_filter_chip(filters: @filters, facet: :analysis, value: "failed", label: "Failed", count: @analysis_counts.fetch("failed", 0), variant: "danger") %>
     </div>
+
+    <% if @container_counts.any? %>
+      <div class="h-section-label mt-3 mb-1">Container</div>
+      <div class="d-flex flex-wrap gap-2">
+        <% @container_counts.each do |name, count| %>
+          <%= log_entry_filter_chip(filters: @filters, facet: :container, value: name, label: name, count: count) %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @severity_counts.any? %>
+      <div class="h-section-label mt-3 mb-1">Severity</div>
+      <div class="d-flex flex-wrap gap-2">
+        <% @severity_counts.each do |level, count| %>
+          <%= log_entry_filter_chip(filters: @filters, facet: :severity, value: level, label: level.humanize, count: count) %>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 </div>
 
@@ -20,6 +41,7 @@
       <th>Container</th>
       <th>Message</th>
       <th class="num">Seen</th>
+      <th>Severity</th>
       <th>Status</th>
       <th>Last seen</th>
     </tr>
@@ -30,6 +52,7 @@
         <td><%= log_entry.source_container %></td>
         <td class="text-truncate log-message-col"><%= log_entry.message %></td>
         <td class="num"><%= log_entry.occurrence_count %></td>
+        <td><%= log_entry_severity_label(log_entry) %></td>
         <td>
           <% case log_entry.analysis_status %>
           <% when "analyzed" %>
@@ -47,5 +70,5 @@
 </table>
 
 <% if @log_entries.empty? %>
-  <p class="text-13 text-secondary mt-3">No entries match this filter.</p>
+  <p class="text-13 text-secondary mt-3">No entries match these filters.</p>
 <% end %>
