@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'sidekiq_capsule_config'
+
 redis_url = ENV.fetch('REDIS_URL', 'redis://redis:6379/0')
 
 Sidekiq.configure_server do |config|
