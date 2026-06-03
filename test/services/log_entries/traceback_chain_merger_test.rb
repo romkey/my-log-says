@@ -46,6 +46,42 @@ module LogEntries
       end
     end
 
+    test 'merges rows that still have docker timestamp prefixes in message' do
+      primary = create_split_entry(
+        "2026-06-03T07:01:31.838000000Z #{HA_WARNING}", offset: 0
+      )
+      create_split_entry('2026-06-03T07:01:31.839000000Z Traceback (most recent call last):', offset: 1)
+      create_split_entry('2026-06-03T07:01:31.840000000Z File "/bond/entity.py", line 142', offset: 2)
+      create_split_entry('2026-06-03T07:01:31.841000000Z TimeoutError', offset: 3)
+
+      result = TracebackChainMerger.call
+
+      assert_equal 1, result.chains
+      merged = LogEntry.find(primary.id)
+
+      assert_includes merged.message, HA_WARNING
+      assert_includes merged.message, 'Traceback (most recent call last):'
+      assert_not_includes merged.message, 'T07:01:31.839000000Z'
+    end
+
+    test 'merges traceback after interleaved primary using forward scan' do
+      create_split_entry('2026-06-03 07:01:31.837 WARNING (MainThread) [bond] cover slow', offset: 0)
+      primary = create_split_entry(HA_WARNING, offset: 1)
+      create_split_entry('Traceback (most recent call last):', offset: 2)
+      create_split_entry('TimeoutError', offset: 3)
+      create_split_entry(
+        '2026-06-03 07:01:31.840 WARNING (MainThread) [bond.entity] other entity', offset: 4
+      )
+
+      result = TracebackChainMerger.call
+
+      assert_equal 1, result.chains
+      merged = LogEntry.find(primary.id)
+
+      assert_includes merged.message, HA_WARNING
+      assert_includes merged.message, 'Traceback'
+    end
+
     test 'does not merge unrelated lines without traceback shape' do
       create_split_entry(HA_WARNING, offset: 0)
       create_split_entry('continued narrative line without traceback shape', offset: 1)

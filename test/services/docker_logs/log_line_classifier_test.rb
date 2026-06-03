@@ -24,6 +24,13 @@ module DockerLogs
       assert LogLineClassifier.continuation_line?('', traceback_open: true)
     end
 
+    test 'strips docker timestamp prefix before classifying' do
+      message = '2026-06-03T07:01:31.839000000Z Traceback (most recent call last):'
+
+      assert_not LogLineClassifier.primary_line?(message)
+      assert LogLineClassifier.continuation_line?(message, traceback_open: false)
+    end
+
     test 'does not classify narrative lines as continuations' do
       message = 'continued narrative line without traceback shape'
 

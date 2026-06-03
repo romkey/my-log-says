@@ -4,6 +4,12 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-03
+
+### Fixed
+
+- `log_entries:merge_traceback_chains` now strips Docker timestamp prefixes from stored messages, scans in import order by id, and uses forward matching so backfill finds real traceback chains.
+
 ## [0.4.0] - 2026-06-03
 
 ### Added

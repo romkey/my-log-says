@@ -28,6 +28,8 @@ module DockerLogs
       LOG_LEVEL_PRIMARY
     ].freeze
 
+    DOCKER_TIMESTAMP = StreamDemuxer::DOCKER_TIMESTAMP
+
     TRACEBACK_CONTINUATIONS = [
       /\ATraceback \(most recent call last\):/,
       /\A\s*File "/,
@@ -41,13 +43,26 @@ module DockerLogs
       /\A(?:TimeoutError|CancelledError|KeyboardInterrupt)\s*\z/
     ].freeze
 
-    def self.primary_line?(body)
+    def self.body(message)
+      text = message.to_s.strip
+      5.times do
+        match = text.match(DOCKER_TIMESTAMP)
+        break unless match
+
+        text = match[2].strip
+      end
+      text
+    end
+
+    def self.primary_line?(message)
+      body = body(message)
       return false if body.blank?
 
       PRIMARY_PATTERNS.any? { |pattern| pattern.match?(body) }
     end
 
-    def self.continuation_line?(body, traceback_open:)
+    def self.continuation_line?(message, traceback_open:)
+      body = body(message)
       return traceback_open if body.blank?
 
       TRACEBACK_CONTINUATIONS.any? { |pattern| pattern.match?(body) }

@@ -36,12 +36,9 @@ module LogEntries
     end
 
     def merge_chains_for(source_container, stream, totals)
-      entries = LogEntry
-                .where(source_container: source_container, stream: stream)
-                .order(:first_seen_at, :id)
-                .to_a
+      entries = LogEntry.where(source_container: source_container, stream: stream).order(:id).to_a
 
-      identify_chains(entries).each do |chain|
+      TracebackChainFinder.call(entries).each do |chain|
         totals[:chains] += 1
         totals[:merged_rows] += chain.size - 1
         merge_chain!(chain) unless dry_run
@@ -50,43 +47,8 @@ module LogEntries
       totals
     end
 
-    def identify_chains(entries)
-      chains = []
-      current = nil
-      traceback_open = false
-
-      entries.each do |entry|
-        current, traceback_open, chains = process_entry_for_chains(
-          entry, current, traceback_open, chains
-        )
-      end
-
-      chains << current if mergeable_chain?(current)
-      chains
-    end
-
-    def process_entry_for_chains(entry, current, traceback_open, chains)
-      body = entry.message
-
-      if DockerLogs::LogLineClassifier.primary_line?(body)
-        chains << current if mergeable_chain?(current)
-        return [[entry], false, chains]
-      end
-
-      if DockerLogs::LogLineClassifier.continuation_line?(body, traceback_open: traceback_open) && current
-        return [current + [entry], true, chains]
-      end
-
-      chains << current if mergeable_chain?(current)
-      [nil, false, chains]
-    end
-
-    def mergeable_chain?(chain)
-      chain && chain.size > 1
-    end
-
     def merge_chain!(chain)
-      combined_message = chain.map(&:message).join("\n")
+      combined_message = chain.map { |entry| DockerLogs::LogLineClassifier.body(entry.message) }.join("\n")
       canonical = CanonicalMerger.pick_canonical(chain)
       duplicates = chain.reject { |entry| entry.id == canonical.id }
       fingerprint = fingerprint_for(canonical, combined_message)
