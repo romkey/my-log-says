@@ -56,6 +56,31 @@ module DockerLogs
       LogEntries::Ingestor.define_singleton_method(:call, original_call)
     end
 
+    test 'groups traceback lines into a single log entry' do
+      container = docker_containers(:web)
+      warning = '2026-06-03 07:01:31.838 WARNING (MainThread) [bond.entity] Entity unavailable'
+      lines = [
+        "2026-06-03T07:01:31.838000000Z #{warning}\n",
+        "2026-06-03T07:01:31.839000000Z Traceback (most recent call last):\n",
+        "2026-06-03T07:01:31.840000000Z   File \"/bond/entity.py\", line 142, in _async_update\n",
+        "2026-06-03T07:01:31.841000000Z TimeoutError\n"
+      ].join
+      logs = multiplexed_log_line(lines)
+      client = fake_client(logs)
+
+      assert_difference -> { LogEntry.count }, 1 do
+        result = Importer.call(docker_container: container, client: client, since: 5.minutes.ago)
+
+        assert_equal 1, result.imported_count
+      end
+
+      entry = LogEntry.order(:id).last
+
+      assert_includes entry.message, warning
+      assert_includes entry.message, 'Traceback (most recent call last):'
+      assert_includes entry.message, 'TimeoutError'
+    end
+
     test 'raises when docker logs fail' do
       container = docker_containers(:web)
       client = Object.new

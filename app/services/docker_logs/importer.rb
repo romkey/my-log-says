@@ -20,7 +20,8 @@ module DockerLogs
 
     def call
       raw_logs = client.container_logs(docker_container.docker_id, since: import_since)
-      import(StreamDemuxer.call(raw_logs))
+      entries = StreamDemuxer.call(raw_logs)
+      import(LineGrouper.call(entries))
     rescue Docker::Client::Error => e
       raise Error, e.message
     end

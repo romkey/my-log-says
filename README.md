@@ -109,6 +109,13 @@ After upgrading, merge existing prefix-variant duplicates once:
 docker compose -f docker-compose.server.yml exec web bin/rails log_entries:merge_prefix_duplicates
 ```
 
+If logs were imported before multiline traceback grouping, preview and merge split stack traces:
+
+```sh
+docker compose -f docker-compose.server.yml exec web bin/rails log_entries:merge_traceback_chains DRY_RUN=true
+docker compose -f docker-compose.server.yml exec web bin/rails log_entries:merge_traceback_chains
+```
+
 ## Testing
 
 ```sh
@@ -128,6 +135,8 @@ docker compose -f docker-compose.lint.yml run --rm rubocop
 - `LogEntries::Ingestor` creates new entries and counts duplicates.
 - `DockerContainers::Synchronizer` lists containers via the Docker socket and upserts local records.
 - `DockerLogs::Importer` reads container logs through the Docker Engine API and sends them through the ingestor.
+- `DockerLogs::LineGrouper` folds traceback continuation lines into the preceding primary log line (disable with `DOCKER_LOG_GROUP_MULTILINE=false`).
+- `log_entries:merge_traceback_chains` backfills rows that were split before grouping was enabled.
 - `SyncDockerContainersJob` and `ImportDockerLogsJob` run in Sidekiq on the `ingestion` queue (scheduled via sidekiq-cron).
 - `DedupeLogEntryJob` merges prefix variants then enqueues `AnalyzeLogEntryJob` when needed.
 - `Inference::Client` calls the configured inference server with the API key from the environment.

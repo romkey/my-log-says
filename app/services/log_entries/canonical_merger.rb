@@ -17,6 +17,14 @@ module LogEntries
       new(log_entry).call
     end
 
+    def self.pick_canonical(entries)
+      new.pick_canonical(entries.to_a)
+    end
+
+    def self.merge_duplicates!(canonical, duplicates)
+      new.merge_duplicates!(canonical, duplicates)
+    end
+
     def initialize(log_entry = nil)
       @log_entry = log_entry
     end
@@ -27,25 +35,46 @@ module LogEntries
       merge_group(matching_entries(log_entry))
     end
 
-    private
-
     attr_reader :log_entry
 
-    def merge_all_groups
-      totals = { groups: 0, merged: 0 }
-      grouped_keys.each do |source_container, stream, normalized_message|
-        sample = LogEntry.find_by!(
-          source_container: source_container,
-          stream: stream,
-          normalized_message: normalized_message
-        )
-        result = merge_group(matching_entries(sample))
-        next if result.merged_count.zero?
-
-        totals[:groups] += 1
-        totals[:merged] += result.merged_count
+    def pick_canonical(entries)
+      entries.min_by do |entry|
+        [
+          CANONICAL_STATUS_ORDER.fetch(entry.analysis_status, 99),
+          canonical_tiebreaker(entry),
+          entry.id
+        ]
       end
-      totals
+    end
+
+    def merge_duplicates!(canonical, duplicates)
+      LogEntry.transaction do
+        canonical.lock!
+        canonical.update!(
+          occurrence_count: canonical.occurrence_count + duplicates.sum(&:occurrence_count),
+          last_seen_at: [canonical.last_seen_at, *duplicates.map(&:last_seen_at)].max
+        )
+        duplicates.each(&:destroy!)
+      end
+    end
+
+    private
+
+    def merge_all_groups
+      grouped_keys.each_with_object({ groups: 0, merged: 0 }) do |key, totals|
+        merge_all_group!(totals, *key)
+      end
+    end
+
+    def merge_all_group!(totals, source_container, stream, normalized_message)
+      sample = LogEntry.find_by!(
+        source_container: source_container, stream: stream, normalized_message: normalized_message
+      )
+      result = merge_group(matching_entries(sample))
+      return if result.merged_count.zero?
+
+      totals[:groups] += 1
+      totals[:merged] += result.merged_count
     end
 
     def grouped_keys
@@ -87,31 +116,10 @@ module LogEntries
       )
     end
 
-    def pick_canonical(entries)
-      entries.min_by do |entry|
-        [
-          CANONICAL_STATUS_ORDER.fetch(entry.analysis_status, 99),
-          canonical_tiebreaker(entry),
-          entry.id
-        ]
-      end
-    end
-
     def canonical_tiebreaker(entry)
       return -entry.occurrence_count if entry.analysis_status == 'analyzed'
 
       0
-    end
-
-    def merge_duplicates!(canonical, duplicates)
-      LogEntry.transaction do
-        canonical.lock!
-        canonical.update!(
-          occurrence_count: canonical.occurrence_count + duplicates.sum(&:occurrence_count),
-          last_seen_at: [canonical.last_seen_at, *duplicates.map(&:last_seen_at)].max
-        )
-        duplicates.each(&:destroy!)
-      end
     end
 
     def analyze_needed?(entry)

@@ -23,5 +23,16 @@ module DockerLogs
       assert_equal 1, entries.length
       assert_equal 'stdout', entries.first.stream
     end
+
+    test 'peels docker timestamp with nanoseconds from application body' do
+      ha_line = '2026-06-03 07:01:31.838 WARNING (MainThread) [bond.entity] Entity unavailable'
+      data = "2026-06-03T07:01:31.838000000Z #{ha_line}\n"
+
+      entries = StreamDemuxer.call(data)
+
+      assert_equal 1, entries.length
+      assert_equal '2026-06-03T07:01:31.838000000Z', entries.first.timestamp
+      assert_equal ha_line, entries.first.message
+    end
   end
 end

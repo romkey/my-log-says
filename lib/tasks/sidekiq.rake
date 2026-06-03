@@ -5,7 +5,7 @@ namespace :sidekiq do
   task clear_queues: :environment do
     require 'sidekiq/api'
 
-    Sidekiq::Queue.all.each(&:clear)
+    Sidekiq::Queue.find_each(&:clear)
     Sidekiq::RetrySet.new.clear
     Sidekiq::ScheduledSet.new.clear
     Sidekiq::DeadSet.new.clear

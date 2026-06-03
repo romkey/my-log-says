@@ -21,4 +21,13 @@ namespace :log_entries do
 
     puts "Merged #{totals[:merged]} rows across #{totals[:groups]} duplicate groups."
   end
+
+  desc 'Merge log entries that are traceback continuations of a preceding row (DRY_RUN=true to preview)'
+  task merge_traceback_chains: :environment do
+    dry_run = ENV['DRY_RUN'] == 'true'
+    result = LogEntries::TracebackChainMerger.call(dry_run: dry_run)
+
+    action = dry_run ? 'Would merge' : 'Merged'
+    puts "#{action} #{result.merged_rows} rows across #{result.chains} traceback chains."
+  end
 end

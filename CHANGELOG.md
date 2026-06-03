@@ -4,6 +4,14 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-03
+
+### Added
+
+- Multiline traceback grouping during Docker log import so stack traces become one analyzable entry.
+- `DOCKER_LOG_GROUP_MULTILINE` toggle to disable grouping.
+- `log_entries:merge_traceback_chains` rake task to backfill rows split before grouping was enabled (`DRY_RUN=true` to preview).
+
 ## [0.3.14] - 2026-06-03
 
 ### Fixed

@@ -8,6 +8,8 @@ module DockerLogs
 
     Entry = Data.define(:stream, :timestamp, :message, :observed_at)
 
+    DOCKER_TIMESTAMP = /\A(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\s+(.*)\z/
+
     def self.call(data)
       new(data).call
     end
@@ -58,13 +60,22 @@ module DockerLogs
     end
 
     def parse_line(line, stream)
-      timestamp, message = line.strip.split(/\s+/, 2)
+      stripped = line.strip
+      timestamp, message = peel_timestamp(stripped)
       Entry.new(
         stream: stream,
         timestamp: timestamp,
-        message: message.to_s,
+        message: message,
         observed_at: parse_timestamp(timestamp)
       )
+    end
+
+    def peel_timestamp(stripped)
+      match = stripped.match(DOCKER_TIMESTAMP)
+      return [match[1], match[2]] if match
+
+      timestamp, message = stripped.split(/\s+/, 2)
+      [timestamp, message.to_s]
     end
 
     def parse_timestamp(timestamp)

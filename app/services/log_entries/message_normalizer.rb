@@ -5,22 +5,22 @@ module LogEntries
   class MessageNormalizer
     MAX_PASSES = 10
 
-    ISO_TIMESTAMP = %r{
-      \A[\[\("']?
+    ISO_TIMESTAMP = /
+      \A[\[("']?
       \d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?
-      [\]\)"']?\s+
-    }x
-    SYSLOG_TIMESTAMP = %r{
+      [\])"']?\s+
+    /x
+    SYSLOG_TIMESTAMP = /
       \A(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+
       \d{1,2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?\s+
-    }ix
-    BRACKETED_PID = %r{\A[\[\("']\d{1,7}[\]\)"']\s+}x
-    BARE_PID = %r{\A\d{4,7}(?=\s+\D)\s+}x
-    LOG_LEVEL = %r{
+    /ix
+    BRACKETED_PID = /\A[\[("']\d{1,7}[\])"']\s+/x
+    BARE_PID = /\A\d{4,7}(?=\s+\D)\s+/x
+    LOG_LEVEL = /
       \A(?:DEBUG|INFO|WARN|WARNING|ERROR|FATAL|TRACE)
       (?:\s+\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?
       \s+
-    }ix
+    /ix
     SIDEKIQ_METADATA = /\A(?:pid=\d+\s+)(?:tid=\S+\s+)?(?:jid=\S+\s+)?/
 
     PREFIX_PATTERNS = [
