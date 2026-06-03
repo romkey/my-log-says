@@ -2,7 +2,7 @@
 
 # Stores a deduplicated Docker log entry and its inference analysis state.
 class LogEntry < ApplicationRecord
-  STATUSES = %w[pending analyzing analyzed failed].freeze
+  STATUSES = %w[pending analyzing analyzed failed excluded].freeze
   CLASSIFICATIONS = %w[connectivity informational configuration].freeze
   URGENCIES = %w[low medium high critical].freeze
 

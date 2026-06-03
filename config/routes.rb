@@ -7,6 +7,14 @@ Rails.application.routes.draw do
     post :analyze, on: :member
   end
 
+  resources :docker_containers, only: [] do
+    patch :toggle_analysis, on: :member
+  end
+
+  patch 'containers/toggle_analysis',
+        to: 'docker_containers#toggle_analysis_by_name',
+        as: :toggle_container_analysis_by_name
+
   resource :settings, only: %i[show update] do
     post :restore_default
   end

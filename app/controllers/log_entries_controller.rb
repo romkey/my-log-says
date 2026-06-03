@@ -5,17 +5,14 @@ class LogEntriesController < ApplicationController
   protect_from_forgery with: :null_session, only: :create
 
   def index
-    @filters = LogEntries::Filters.from_params(base_scope: visible_log_entries, params: params)
-    @total_count = visible_log_entries.count
-    @results_count = @filters.apply.count
-    @analysis_counts = @filters.analysis_counts
-    @container_counts = @filters.container_counts
-    @severity_counts = @filters.severity_counts
+    prepare_index_filters
+    assign_index_counts
     @log_entries = @filters.apply.recent.limit(100)
   end
 
   def show
     @log_entry = LogEntry.find(params.expect(:id))
+    @docker_container = DockerContainer.find_by(name: @log_entry.source_container)
   end
 
   def create
@@ -30,11 +27,31 @@ class LogEntriesController < ApplicationController
   end
 
   def analyze
-    AnalyzeLogEntryJob.perform_later(params[:id])
-    redirect_to log_entry_path(params[:id]), notice: t('.queued')
+    log_entry = LogEntry.find(params.expect(:id))
+    if DockerContainers::AnalysisExclusion.skipped?(log_entry.source_container)
+      redirect_to log_entry_path(log_entry), alert: t('.excluded_container')
+      return
+    end
+
+    AnalyzeLogEntryJob.perform_later(log_entry.id)
+    redirect_to log_entry_path(log_entry), notice: t('.queued')
   end
 
   private
+
+  def prepare_index_filters
+    @filters = LogEntries::Filters.from_params(base_scope: visible_log_entries, params: params)
+    @total_count = visible_log_entries.count
+    @results_count = @filters.apply.count
+    @docker_containers = DockerContainer.listed.order(:name)
+    @analysis_excluded_count = DockerContainer.where(skip_analysis: true).count
+  end
+
+  def assign_index_counts
+    @analysis_counts = @filters.analysis_counts
+    @container_counts = @filters.container_counts
+    @severity_counts = @filters.severity_counts
+  end
 
   def excluded_containers
     @excluded_containers ||= DockerContainer.where(import_status: 'excluded').pluck(:name)

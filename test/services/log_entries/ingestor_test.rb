@@ -26,6 +26,22 @@ module LogEntries
       end
     end
 
+    test 'does not enqueue analysis for excluded containers' do
+      docker_containers(:web).exclude_from_analysis!
+
+      assert_no_enqueued_jobs do
+        result = Ingestor.call(
+          source_container: 'web',
+          stream: 'stderr',
+          message: 'ignored noise',
+          observed_at: @observed_at
+        )
+
+        assert_not result.duplicate
+        assert_equal 'excluded', result.log_entry.analysis_status
+      end
+    end
+
     test 'counts duplicates without queueing another analysis' do
       first = Ingestor.call(
         source_container: 'web',

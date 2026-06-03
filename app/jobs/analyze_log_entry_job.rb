@@ -9,6 +9,8 @@ class AnalyzeLogEntryJob < ApplicationJob
   def perform(log_entry_id)
     log_entry = LogEntry.find_by(id: log_entry_id)
     return unless log_entry
+    return if log_entry.analysis_status == 'excluded'
+    return if DockerContainers::AnalysisExclusion.skipped?(log_entry.source_container)
 
     LogEntries::Analyzer.call(log_entry)
   end

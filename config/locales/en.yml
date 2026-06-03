@@ -2,6 +2,11 @@ en:
   log_entries:
     analyze:
       queued: Analysis queued
+      excluded_container: This container is excluded from analysis.
+  docker_containers:
+    toggle_analysis:
+      excluded: "%{name} excluded from analysis."
+      included: "%{name} will be analyzed again."
   settings:
     update:
       updated: Inference prompt saved.

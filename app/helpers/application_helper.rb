@@ -21,6 +21,19 @@ module ApplicationHelper
     end
   end
 
+  def container_analysis_toggle(container, filters:)
+    path = toggle_analysis_docker_container_path(container, filters.to_params)
+    classes = ['filter-chip']
+    classes << 'muted' if container.skip_analysis?
+    subtitle = container.skip_analysis? ? 'No analysis' : 'Analyzing'
+    subtitle_class = container.skip_analysis? ? 'text-secondary' : 'text-body'
+
+    button_to path, method: :patch, form: { class: 'd-inline filter-chip-form' }, class: classes.join(' '),
+                    title: container.skip_analysis? ? 'Include in analysis' : 'Exclude from analysis' do
+      safe_join([container.name, content_tag(:span, subtitle, class: subtitle_class)])
+    end
+  end
+
   def log_entry_severity_label(entry)
     return content_tag(:span, '—', class: 'text-secondary') if entry.urgency.blank?
 

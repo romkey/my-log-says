@@ -27,4 +27,15 @@ class DockerContainerTest < ActiveSupport::TestCase
     assert_equal 'failed', container.import_status
     assert_equal 'boom', container.import_error
   end
+
+  test 'exclude_from_analysis marks pending entries excluded' do
+    container = docker_containers(:web)
+    entry = log_entries(:pending_warning)
+    entry.update!(source_container: 'web', analysis_status: 'pending')
+
+    container.exclude_from_analysis!
+
+    assert container.skip_analysis?
+    assert_equal 'excluded', entry.reload.analysis_status
+  end
 end

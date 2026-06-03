@@ -21,7 +21,7 @@ module LogEntries
     def call
       result = upsert_log_entry
 
-      AnalyzeLogEntryJob.perform_later(result.log_entry.id) if enqueue_analysis && !result.duplicate
+      AnalyzeLogEntryJob.perform_later(result.log_entry.id) if should_enqueue_analysis?(result)
 
       result
     rescue ActiveRecord::RecordNotUnique
@@ -74,8 +74,18 @@ module LogEntries
         first_seen_at: observed_at,
         last_seen_at: observed_at,
         raw_payload: raw_payload,
-        analysis_status: 'pending'
+        analysis_status: analysis_status_for_container
       }
+    end
+
+    def analysis_status_for_container
+      return 'excluded' if DockerContainers::AnalysisExclusion.skipped?(source_container)
+
+      'pending'
+    end
+
+    def should_enqueue_analysis?(result)
+      enqueue_analysis && !result.duplicate && result.log_entry.analysis_status == 'pending'
     end
   end
 end

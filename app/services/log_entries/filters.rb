@@ -3,7 +3,7 @@
 module LogEntries
   # Parses and applies stacked index filters for log entries.
   class Filters
-    ANALYSIS_FACETS = %w[analyzed failed].freeze
+    ANALYSIS_FACETS = %w[analyzed failed excluded].freeze
     SEVERITY_ORDER = LogEntry::URGENCIES.reverse.freeze
 
     attr_reader :base_scope, :analysis, :container, :severity

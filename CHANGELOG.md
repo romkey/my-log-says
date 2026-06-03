@@ -4,6 +4,14 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.3.11] - 2026-06-03
+
+### Added
+
+- UI to exclude containers from LLM analysis (index chips and log entry detail actions).
+- `skip_analysis` flag on tracked containers; excluded entries get `analysis_status: excluded`.
+- **Excluded** analysis filter chip when excluded entries exist.
+
 ## [0.3.10] - 2026-06-03
 
 ### Added

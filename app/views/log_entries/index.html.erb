@@ -7,13 +7,28 @@
       <% if @filters.active? %>
         · <%= pluralize(@filters.active_count, "filter") %> active · <%= link_to "Clear", log_entries_path, class: "link-light" %>
       <% end %>
+      <% if @analysis_excluded_count.positive? %>
+        · <span class="text-body"><%= @analysis_excluded_count %></span> excluded from analysis
+      <% end %>
     </div>
 
     <div class="h-section-label mt-3 mb-1">Analysis</div>
     <div class="d-flex flex-wrap gap-2">
       <%= log_entry_filter_chip(filters: @filters, facet: :analysis, value: "analyzed", label: "Analyzed", count: @analysis_counts.fetch("analyzed", 0)) %>
       <%= log_entry_filter_chip(filters: @filters, facet: :analysis, value: "failed", label: "Failed", count: @analysis_counts.fetch("failed", 0), variant: "danger") %>
+      <% if @analysis_counts.fetch("excluded", 0).positive? %>
+        <%= log_entry_filter_chip(filters: @filters, facet: :analysis, value: "excluded", label: "Excluded", count: @analysis_counts.fetch("excluded", 0)) %>
+      <% end %>
     </div>
+
+    <% if @docker_containers.any? %>
+      <div class="h-section-label mt-3 mb-1">Analysis by container</div>
+      <div class="d-flex flex-wrap gap-2">
+        <% @docker_containers.each do |container| %>
+          <%= container_analysis_toggle(container, filters: @filters) %>
+        <% end %>
+      </div>
+    <% end %>
 
     <% if @container_counts.any? %>
       <div class="h-section-label mt-3 mb-1">Container</div>
@@ -61,6 +76,8 @@
             <span class="badge text-bg-danger-subtle" title="<%= log_entry.analysis_error %>">Failed</span>
           <% when "pending", "analyzing" %>
             <span class="status-dot status-muted" title="<%= log_entry.analysis_status.humanize %>"></span>
+          <% when "excluded" %>
+            <span class="badge text-bg-secondary-subtle">Excluded</span>
           <% end %>
         </td>
         <td class="text-secondary"><%= time_ago_in_words(log_entry.last_seen_at) %> ago</td>

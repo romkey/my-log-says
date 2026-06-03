@@ -5,9 +5,23 @@
     <div class="text-13 text-secondary mt-1">
       <span class="text-body"><%= @log_entry.occurrence_count %></span> observed ·
       <%= @log_entry.analysis_status.humanize %>
+      <% if @docker_container&.skip_analysis? %>
+        · <span class="text-secondary">Container excluded from analysis</span>
+      <% end %>
     </div>
   </div>
-  <%= button_to "Analyze", analyze_log_entry_path(@log_entry), class: "btn btn-primary btn-sm" %>
+  <div class="d-flex gap-2">
+    <% if @docker_container&.skip_analysis? %>
+      <%= button_to "Include in analysis", toggle_analysis_docker_container_path(@docker_container), method: :patch, class: "btn btn-outline-secondary btn-sm" %>
+    <% elsif @docker_container %>
+      <%= button_to "Exclude from analysis", toggle_analysis_docker_container_path(@docker_container), method: :patch, class: "btn btn-outline-secondary btn-sm" %>
+    <% else %>
+      <%= button_to "Exclude from analysis", toggle_container_analysis_by_name_path(name: @log_entry.source_container), method: :patch, class: "btn btn-outline-secondary btn-sm" %>
+    <% end %>
+    <% unless @docker_container&.skip_analysis? || @log_entry.analysis_status == 'excluded' %>
+      <%= button_to "Analyze", analyze_log_entry_path(@log_entry), class: "btn btn-primary btn-sm" %>
+    <% end %>
+  </div>
 </div>
 
 <section class="card mb-3">
@@ -20,7 +34,9 @@
 <section class="card">
   <div class="card-body">
     <h2 class="h6">Analysis</h2>
-    <% if @log_entry.analyzed? %>
+    <% if @log_entry.analysis_status == 'excluded' %>
+      <div class="text-secondary">This entry was not analyzed because its container is excluded.</div>
+    <% elsif @log_entry.analyzed? %>
       <dl class="row mb-0 text-13">
         <dt class="col-sm-3 text-secondary">Classification</dt>
         <dd class="col-sm-9">
