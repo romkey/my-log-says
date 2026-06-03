@@ -57,6 +57,8 @@ INFERENCE_MODEL=log-analyzer
 INFERENCE_FALLBACK_MODEL=backup-model
 ```
 
+**API format:** By default LogLady POSTs a custom JSON payload to `INFERENCE_URL` (`INFERENCE_API_FORMAT=loglady`). If your server speaks the OpenAI chat completions API instead, set `INFERENCE_API_FORMAT=openai` and point `INFERENCE_URL` at the API base (e.g. `https://host/v1` or `https://host/v1/chat/completions`). A 405 response usually means the URL or format does not match your server — fix the config rather than retrying.
+
 Set `INFERENCE_FALLBACK_MODEL` to retry analysis with a second model when the server reports the primary model is unavailable (HTTP 404/410, or 400/422/503 with a model-related error).
 
 Edit the LLM prompt at **Settings** in the running app (stored in the database). On first boot, the app seeds from `config/inference_prompt.example.txt`. Override with `INFERENCE_PROMPT` (inline) or `INFERENCE_PROMPT_FILE` (path) in the environment if needed. The inference server should return JSON with `classification`, `urgency`, `needs_action`, `fixes`, and `other_suggestions` — see the example prompt for the expected schema.

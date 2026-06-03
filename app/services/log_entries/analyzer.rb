@@ -19,7 +19,7 @@ module LogEntries
       save_success!(client.analyze(log_entry))
     rescue Inference::Client::Error => e
       mark_failed!(e)
-      raise
+      raise if e.is_a?(Inference::Client::RetryableError)
     end
 
     private

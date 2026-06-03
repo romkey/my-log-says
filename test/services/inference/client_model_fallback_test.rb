@@ -51,7 +51,7 @@ module Inference
         Response.new(code: '500', body: 'internal error')
       end
 
-      error = assert_raises Client::Error do
+      error = assert_raises Client::RetryableError do
         @client.analyze(@entry)
       end
 

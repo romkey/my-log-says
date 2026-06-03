@@ -19,8 +19,12 @@ module LogEntries
     end
 
     FailingClient = Class.new do
+      def initialize(error_class: Inference::Client::RetryableError)
+        @error_class = error_class
+      end
+
       def analyze(_log_entry)
-        raise Inference::Client::Error, 'server unavailable'
+        raise @error_class.new('server unavailable', status_code: 503)
       end
     end
 
@@ -51,8 +55,19 @@ module LogEntries
     test 'marks analysis failures for retry' do
       entry = log_entries(:pending_warning)
 
-      assert_raises Inference::Client::Error do
+      assert_raises Inference::Client::RetryableError do
         Analyzer.call(entry, client: FailingClient.new)
+      end
+
+      assert_equal 'failed', entry.reload.analysis_status
+      assert_equal 'server unavailable', entry.analysis_error
+    end
+
+    test 'does not re-raise permanent inference errors' do
+      entry = log_entries(:pending_warning)
+
+      assert_nothing_raised do
+        Analyzer.call(entry, client: FailingClient.new(error_class: Inference::Client::Error))
       end
 
       assert_equal 'failed', entry.reload.analysis_status

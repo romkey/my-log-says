@@ -7,7 +7,27 @@ require 'uri'
 module Inference
   # HTTP client for sending log entries to the configured inference service.
   class Client
+    # Base inference client error; permanent failures (wrong URL, auth, etc.).
     class Error < StandardError
+      RETRYABLE_STATUS_CODES = [408, 429, 500, 502, 503, 504].freeze
+
+      attr_reader :status_code
+
+      def initialize(message, status_code: nil)
+        super(message)
+        @status_code = status_code
+      end
+
+      def retryable?
+        false
+      end
+    end
+
+    # Transient inference failure that Sidekiq should retry (5xx, rate limits).
+    class RetryableError < Error
+      def retryable?
+        true
+      end
     end
 
     class ConfigurationError < Error
@@ -15,14 +35,16 @@ module Inference
 
     DEFAULT_MODEL = 'log-analyzer'
     MODEL_UNAVAILABLE_PATTERN = /model/i
+    API_FORMATS = %w[loglady openai].freeze
 
     def initialize(**options)
-      @endpoint = options.fetch(:endpoint) { ENV.fetch('INFERENCE_URL', nil) }
-      @api_key = options.fetch(:api_key) { ENV.fetch('INFERENCE_API_KEY', nil) }
-      @model = options.fetch(:model) { ENV.fetch('INFERENCE_MODEL', DEFAULT_MODEL) }
+      @endpoint = env_option(options, :endpoint, 'INFERENCE_URL')
+      @api_key = env_option(options, :api_key, 'INFERENCE_API_KEY')
+      @model = env_option(options, :model, 'INFERENCE_MODEL', DEFAULT_MODEL)
       @fallback_model = options.fetch(:fallback_model) { ENV['INFERENCE_FALLBACK_MODEL'].presence }
-      @timeout = options.fetch(:timeout) { ENV.fetch('INFERENCE_TIMEOUT_SECONDS', 30).to_i }
+      @timeout = env_option(options, :timeout, 'INFERENCE_TIMEOUT_SECONDS', 30).to_i
       @prompt = options.fetch(:prompt) { Prompt.resolve }
+      @api_format = resolve_api_format(options)
     end
 
     def analyze(log_entry)
@@ -43,20 +65,43 @@ module Inference
 
     private
 
-    attr_reader :endpoint, :api_key, :model, :fallback_model, :timeout, :prompt
+    attr_reader :endpoint, :api_key, :model, :fallback_model, :timeout, :prompt, :api_format
 
     def models_for_attempt
       @models_for_attempt ||= [model, fallback_model].compact.uniq
+    end
+
+    def env_option(options, key, env_key, default = nil)
+      options.fetch(key) { ENV.fetch(env_key, default) }
+    end
+
+    def resolve_api_format(options)
+      options.fetch(:api_format) { ENV.fetch('INFERENCE_API_FORMAT', 'loglady') }
     end
 
     def validate_configuration!
       raise ConfigurationError, 'INFERENCE_URL is required' if endpoint.blank?
       raise ConfigurationError, 'INFERENCE_API_KEY is required' if api_key.blank?
       raise ConfigurationError, 'INFERENCE_PROMPT is required' if prompt.blank?
+      return if API_FORMATS.include?(api_format)
+
+      raise ConfigurationError, "INFERENCE_API_FORMAT must be one of: #{API_FORMATS.join(', ')}"
     end
 
     def perform_request(log_entry, model_name)
-      http.request(request_for(log_entry, model_name))
+      http.request(build_request(log_entry, model_name))
+    end
+
+    def build_request(log_entry, model_name)
+      RequestBuilder.build(
+        log_entry: log_entry,
+        model_name: model_name,
+        prompt: prompt,
+        endpoint: endpoint,
+        api_format: api_format
+      ).tap do |request|
+        request['Authorization'] = "Bearer #{api_key}"
+      end
     end
 
     def retry_with_fallback?(response, model_name)
@@ -76,11 +121,14 @@ module Inference
     def raise_response_error!(response)
       return if response.is_a?(Net::HTTPSuccess)
 
-      raise Error, "Inference server returned #{response.code}: #{response.body}"
+      status_code = response.code.to_i
+      message = "Inference server returned #{response.code}: #{response.body}"
+      error_class = Error::RETRYABLE_STATUS_CODES.include?(status_code) ? RetryableError : Error
+      raise error_class.new(message, status_code: status_code)
     end
 
     def parse_body(response)
-      JSON.parse(response.body)
+      ResponseBody.normalize(JSON.parse(response.body), api_format: api_format)
     end
 
     def http
@@ -90,35 +138,6 @@ module Inference
         client.open_timeout = timeout
         client.read_timeout = timeout
       end
-    end
-
-    def request_for(log_entry, model_name)
-      uri = URI(endpoint)
-      Net::HTTP::Post.new(uri.request_uri).tap do |request|
-        request['Authorization'] = "Bearer #{api_key}"
-        request['Content-Type'] = 'application/json'
-        request.body = JSON.generate(payload_for(log_entry, model_name))
-      end
-    end
-
-    def payload_for(log_entry, model_name)
-      {
-        model: model_name,
-        prompt: prompt,
-        log_entry: log_entry_payload(log_entry)
-      }
-    end
-
-    def log_entry_payload(log_entry)
-      {
-        id: log_entry.id,
-        source_container: log_entry.source_container,
-        stream: log_entry.stream,
-        message: log_entry.message,
-        occurrence_count: log_entry.occurrence_count,
-        first_seen_at: log_entry.first_seen_at&.iso8601,
-        last_seen_at: log_entry.last_seen_at&.iso8601
-      }
     end
   end
 end

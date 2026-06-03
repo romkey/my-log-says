@@ -4,6 +4,17 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-06-03
+
+### Added
+
+- `INFERENCE_API_FORMAT` env var: `loglady` (default) or `openai` for OpenAI-compatible chat completions endpoints.
+
+### Fixed
+
+- Permanent inference errors (405, 401, etc.) no longer retry indefinitely; entries are marked failed once.
+- Sidekiq only retries transient inference failures (408, 429, 5xx).
+
 ## [0.2.2] - 2026-05-19
 
 ### Added
