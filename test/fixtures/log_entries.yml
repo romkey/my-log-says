@@ -30,3 +30,17 @@ pending_warning:
   raw_payload: {}
   created_at: <%= 2.minutes.ago %>
   updated_at: <%= 2.minutes.ago %>
+
+failed_inference:
+  source_container: api
+  stream: stderr
+  message: "Connection reset by peer"
+  fingerprint: "failed-inference-fingerprint"
+  occurrence_count: 1
+  first_seen_at: <%= 3.minutes.ago %>
+  last_seen_at: <%= 3.minutes.ago %>
+  analysis_status: failed
+  analysis_error: "Inference server returned 405: Method Not Allowed"
+  raw_payload: {}
+  created_at: <%= 3.minutes.ago %>
+  updated_at: <%= 3.minutes.ago %>

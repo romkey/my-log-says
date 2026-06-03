@@ -2,14 +2,14 @@
   <div>
     <h1 class="h-page-title mb-0">Log entries</h1>
     <div class="text-13 text-secondary mt-1">
-      <span class="text-body"><%= LogEntry.count %></span> unique ·
-      <span class="text-body"><%= @analysis_counts.fetch('pending', 0) %></span> pending ·
-      <% failed_count = @analysis_counts.fetch('failed', 0) %>
-      <% if failed_count.positive? %>
-        <span class="text-warning"><%= failed_count %></span> analysis failed
-      <% else %>
-        <span class="text-secondary"><%= failed_count %></span> analysis failed
+      <span class="text-body"><%= @total_count %></span> unique
+      <% if @analysis_filter.present? %>
+        · <%= link_to "Clear filter", log_entries_path, class: "link-light" %>
       <% end %>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      <%= log_entry_filter_chip(label: "Analyzed", count: @analyzed_count, filter: "analyzed", active_filter: @analysis_filter) %>
+      <%= log_entry_filter_chip(label: "Failed", count: @failed_count, filter: "failed", active_filter: @analysis_filter, variant: "danger") %>
     </div>
   </div>
 </div>
@@ -26,17 +26,18 @@
   </thead>
   <tbody>
     <% @log_entries.each do |log_entry| %>
-      <tr class="<%= 'table-warning' if log_entry.analysis_status == 'failed' %>">
-        <td><%= link_to log_entry.source_container, log_entry_path(log_entry), class: "link-light" %></td>
-        <td class="text-truncate" style="max-width: 48rem;"><%= log_entry.message %></td>
+      <tr class="table-row-link" onclick="window.location='<%= log_entry_path(log_entry) %>'">
+        <td><%= log_entry.source_container %></td>
+        <td class="text-truncate log-message-col"><%= log_entry.message %></td>
         <td class="num"><%= log_entry.occurrence_count %></td>
         <td>
-          <% if log_entry.analysis_status == 'failed' %>
-            <span class="badge text-bg-warning-subtle" title="<%= log_entry.analysis_error %>">Failed</span>
-          <% elsif log_entry.analysis_status == 'analyzed' %>
-            <span class="text-secondary">Analyzed</span>
-          <% else %>
-            <%= log_entry.analysis_status.humanize %>
+          <% case log_entry.analysis_status %>
+          <% when "analyzed" %>
+            <span class="status-dot status-success" title="Analyzed"></span>
+          <% when "failed" %>
+            <span class="badge text-bg-danger-subtle" title="<%= log_entry.analysis_error %>">Failed</span>
+          <% when "pending", "analyzing" %>
+            <span class="status-dot status-muted" title="<%= log_entry.analysis_status.humanize %>"></span>
           <% end %>
         </td>
         <td class="text-secondary"><%= time_ago_in_words(log_entry.last_seen_at) %> ago</td>
@@ -44,3 +45,7 @@
     <% end %>
   </tbody>
 </table>
+
+<% if @log_entries.empty? %>
+  <p class="text-13 text-secondary mt-3">No entries match this filter.</p>
+<% end %>

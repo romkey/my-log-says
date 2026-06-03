@@ -16,6 +16,7 @@ class LogEntry < ApplicationRecord
 
   scope :recent, -> { order(last_seen_at: :desc, created_at: :desc) }
   scope :needs_analysis, -> { where(analysis_status: %w[pending failed]) }
+  scope :with_analysis_status, ->(status) { where(analysis_status: status) }
 
   def duplicate?
     occurrence_count > 1

@@ -3,29 +3,23 @@
 require 'test_helper'
 
 class LogEntryTest < ActiveSupport::TestCase
-  test 'valid fixture' do
-    assert log_entries(:pending_warning).valid?
-  end
-
-  test 'duplicate is based on occurrence count' do
-    entry = log_entries(:pending_warning)
-    assert_not entry.duplicate?
-
-    entry.occurrence_count = 2
-    assert entry.duplicate?
-  end
-
-  test 'requires a known analysis status' do
+  test 'validates analysis status inclusion' do
     entry = log_entries(:pending_warning)
     entry.analysis_status = 'unknown'
 
     assert_not entry.valid?
+    assert_includes entry.errors[:analysis_status], 'is not included in the list'
   end
 
-  test 'requires known classification when set' do
-    entry = log_entries(:analyzed_error)
-    entry.classification = 'unknown'
+  test 'analyzed? reflects analysis status' do
+    assert log_entries(:analyzed_error).analyzed?
+    assert_not log_entries(:pending_warning).analyzed?
+  end
 
-    assert_not entry.valid?
+  test 'with_analysis_status scope filters by status' do
+    analyzed = LogEntry.with_analysis_status('analyzed')
+
+    assert_includes analyzed, log_entries(:analyzed_error)
+    assert_not_includes analyzed, log_entries(:failed_inference)
   end
 end

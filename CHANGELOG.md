@@ -4,6 +4,18 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-06-03
+
+### Added
+
+- Log entries index: clickable **Analyzed** and **Failed** filter chips with counts.
+- `refresh.css` for compact table, filter chips, and status dots (replaces yellow Bootstrap warnings).
+
+### Changed
+
+- Failed analysis rows use danger-subtle badges and dots instead of yellow table highlighting.
+- Log entry rows are clickable to open detail view.
+
 ## [0.3.8] - 2026-06-03
 
 ### Added
