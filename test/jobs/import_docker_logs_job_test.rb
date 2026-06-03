@@ -28,6 +28,12 @@ class ImportDockerLogsJobTest < ActiveJob::TestCase
     DockerLogs::Importer.define_singleton_method(:call, original_call)
   end
 
+  test 'ignores stale jobs for missing containers' do
+    assert_nothing_raised do
+      ImportDockerLogsJob.perform_now(-1)
+    end
+  end
+
   test 'marks the container failed when import fails' do
     container = docker_containers(:web)
     original_call = DockerLogs::Importer.method(:call)

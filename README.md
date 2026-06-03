@@ -77,6 +77,12 @@ Sidekiq discovers containers through the mounted Docker socket (`/var/run/docker
 
 The dev, test, and lint stacks use the official `ruby:3.3.11` image with this repository bind-mounted into the container. They run `bundle check || bundle install` against a cached Bundler volume, so Gemfile changes do not require rebuilding a tool image.
 
+If you reset the database but keep Redis, stale Sidekiq jobs will reference old row IDs. Clear the queues once:
+
+```sh
+docker compose -f docker-compose.dev.yml run --rm web ./bin/rails sidekiq:clear_queues
+```
+
 ## Ingesting Logs
 
 Log import runs automatically in Sidekiq when `DOCKER_LOG_SYNC_ENABLED=true` (the default). You can also import manually for one container:

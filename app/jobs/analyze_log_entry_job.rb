@@ -7,6 +7,9 @@ class AnalyzeLogEntryJob < ApplicationJob
   retry_on Inference::Client::Error, wait: :polynomially_longer, attempts: 3
 
   def perform(log_entry_id)
-    LogEntries::Analyzer.call(LogEntry.find(log_entry_id))
+    log_entry = LogEntry.find_by(id: log_entry_id)
+    return unless log_entry
+
+    LogEntries::Analyzer.call(log_entry)
   end
 end

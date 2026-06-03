@@ -13,4 +13,10 @@ class AnalyzeLogEntryJobTest < ActiveJob::TestCase
   ensure
     LogEntries::Analyzer.define_singleton_method(:call, original_call)
   end
+
+  test 'ignores stale jobs for deleted log entries' do
+    assert_nothing_raised do
+      AnalyzeLogEntryJob.perform_now(-1)
+    end
+  end
 end

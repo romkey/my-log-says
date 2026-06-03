@@ -5,7 +5,9 @@ class ImportDockerLogsJob < ApplicationJob
   queue_as :ingestion
 
   def perform(docker_container_id)
-    container = DockerContainer.find(docker_container_id)
+    container = DockerContainer.find_by(id: docker_container_id)
+    return unless container
+
     container.mark_importing!
 
     result = DockerLogs::Importer.call(docker_container: container)
