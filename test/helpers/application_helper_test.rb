@@ -37,6 +37,15 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes html, 'filter-chip active'
   end
 
+  test 'container stream path filters container and focuses entry' do
+    entry = log_entries(:analyzed_error)
+    path = log_entry_container_stream_path(entry)
+
+    assert_includes path, 'container=web'
+    assert_includes path, "focus=#{entry.id}"
+    assert_includes path, "log-entry-#{entry.id}"
+  end
+
   test 'severity label highlights high urgency' do
     html = log_entry_severity_label(log_entries(:analyzed_error))
 

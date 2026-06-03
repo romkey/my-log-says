@@ -6,8 +6,9 @@ class LogEntriesController < ApplicationController
 
   def index
     prepare_index_filters
+    apply_focus_container_filter!
     assign_index_counts
-    @log_entries = @filters.apply.recent.limit(100)
+    @log_entries = build_index_entries
   end
 
   def show
@@ -40,6 +41,7 @@ class LogEntriesController < ApplicationController
   private
 
   def prepare_index_filters
+    @focus_log_entry = focus_log_entry
     @filters = LogEntries::Filters.from_params(base_scope: visible_log_entries, params: params)
     @total_count = visible_log_entries.count
     @results_count = @filters.apply.count
@@ -67,5 +69,33 @@ class LogEntriesController < ApplicationController
 
   def log_entry_params
     params.expect(log_entry: [:source_container, :stream, :message, { raw_payload: {} }]).to_h.symbolize_keys
+  end
+
+  def apply_focus_container_filter!
+    return if @focus_log_entry.blank? || @filters.container.present?
+
+    @filters = LogEntries::Filters.new(
+      base_scope: @filters.base_scope,
+      analysis: @filters.analysis,
+      container: @focus_log_entry.source_container,
+      severity: @filters.severity
+    )
+  end
+
+  def build_index_entries
+    scope = @filters.apply.recent
+    entries = scope.limit(100).to_a
+    return entries if @focus_log_entry.blank?
+    return entries if entries.any? { |entry| entry.id == @focus_log_entry.id }
+    return entries unless scope.exists?(id: @focus_log_entry.id)
+
+    ([@focus_log_entry] + entries).uniq(&:id).first(100)
+  end
+
+  def focus_log_entry
+    return @focus_log_entry if defined?(@focus_log_entry)
+
+    focus_id = params[:focus].presence
+    @focus_log_entry = focus_id.present? ? visible_log_entries.find_by(id: focus_id) : nil
   end
 end

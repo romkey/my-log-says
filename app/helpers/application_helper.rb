@@ -34,6 +34,14 @@ module ApplicationHelper
     end
   end
 
+  def log_entry_container_stream_path(log_entry)
+    log_entries_path(
+      container: log_entry.source_container,
+      focus: log_entry.id,
+      anchor: "log-entry-#{log_entry.id}"
+    )
+  end
+
   def log_entry_severity_label(entry)
     return content_tag(:span, '—', class: 'text-secondary') if entry.urgency.blank?
 

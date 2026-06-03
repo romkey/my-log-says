@@ -1,6 +1,6 @@
 <div class="d-flex align-items-end justify-content-between mb-3">
   <div class="w-100">
-    <h1 class="h-page-title mb-0">Log entries</h1>
+    <h1 class="h-page-title mb-0"><%= @filters.container.presence || "Log entries" %></h1>
     <div class="text-13 text-secondary mt-1">
       <span class="text-body"><%= @results_count %></span> shown ·
       <span class="text-body"><%= @total_count %></span> total
@@ -63,7 +63,7 @@
   </thead>
   <tbody>
     <% @log_entries.each do |log_entry| %>
-      <tr class="table-row-link" onclick="window.location='<%= log_entry_path(log_entry) %>'">
+      <tr id="log-entry-<%= log_entry.id %>" class="table-row-link log-entry-row" onclick="window.location='<%= log_entry_path(log_entry) %>'">
         <td><%= log_entry.source_container %></td>
         <td class="text-truncate log-message-col"><%= log_entry.message %></td>
         <td class="num"><%= log_entry.occurrence_count %></td>

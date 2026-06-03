@@ -4,6 +4,12 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.3.13] - 2026-06-03
+
+### Added
+
+- **Container stream** on the log entry detail page: opens the index filtered to that container with the entry highlighted and scrolled into view.
+
 ## [0.3.12] - 2026-06-03
 
 ### Added

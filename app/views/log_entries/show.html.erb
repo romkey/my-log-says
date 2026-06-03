@@ -11,6 +11,7 @@
     </div>
   </div>
   <div class="d-flex gap-2">
+    <%= link_to "Container stream", log_entry_container_stream_path(@log_entry), class: "btn btn-outline-secondary btn-sm" %>
     <% if @docker_container&.skip_analysis? %>
       <%= button_to "Include in analysis", toggle_analysis_docker_container_path(@docker_container), method: :patch, class: "btn btn-outline-secondary btn-sm" %>
     <% elsif @docker_container %>
