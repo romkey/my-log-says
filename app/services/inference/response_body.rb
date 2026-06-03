@@ -15,10 +15,30 @@ module Inference
     def normalize
       return data unless openai_format?
 
+      parse_openai_content
+    end
+
+    def parse_openai_content
       content = data.dig('choices', 0, 'message', 'content')
-      raise Client::Error.new('OpenAI response missing message content', status_code: 200) if content.blank?
+      raise_missing_content if content.blank?
 
       JSON.parse(content)
+    rescue JSON::ParserError => e
+      raise_invalid_content(content, e)
+    end
+
+    def raise_missing_content
+      raise Client::Error.new(
+        ErrorContext.append(data, 'OpenAI response missing message content'),
+        status_code: 200
+      )
+    end
+
+    def raise_invalid_content(content, error)
+      raise Client::Error.new(
+        ErrorContext.append(content, "OpenAI message content is not valid JSON: #{error.message}"),
+        status_code: 200
+      )
     end
 
     private

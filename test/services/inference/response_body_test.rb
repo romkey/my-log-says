@@ -39,7 +39,24 @@ module Inference
         ResponseBody.normalize(data, api_format: 'openai')
       end
 
-      assert_equal 'OpenAI response missing message content', error.message
+      assert_match(/OpenAI response missing message content/, error.message)
+      assert_match(/Response:/, error.message)
+      assert_equal 200, error.status_code
+    end
+
+    test 'raises when openai content is not valid json' do
+      data = {
+        'choices' => [
+          { 'message' => { 'content' => 'not-json' } }
+        ]
+      }
+
+      error = assert_raises Client::Error do
+        ResponseBody.normalize(data, api_format: 'openai')
+      end
+
+      assert_match(/not valid JSON/, error.message)
+      assert_match(/Response: not-json/, error.message)
       assert_equal 200, error.status_code
     end
   end

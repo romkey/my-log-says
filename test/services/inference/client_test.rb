@@ -64,5 +64,23 @@ module Inference
 
       assert_match(/INFERENCE_API_FORMAT/, error.message)
     end
+
+    test 'includes response body when server returns invalid json' do
+      client = Client.new(
+        endpoint: 'https://example.test/analyze',
+        api_key: 'secret',
+        prompt: 'Analyze.'
+      )
+      client.define_singleton_method(:perform_request) do |_log_entry, _model_name|
+        ClientModelFallbackTest::Response.new(code: '200', body: 'not-json')
+      end
+
+      error = assert_raises Client::Error do
+        client.analyze(log_entries(:pending_warning))
+      end
+
+      assert_match(/invalid JSON/, error.message)
+      assert_match(/Response: not-json/, error.message)
+    end
   end
 end

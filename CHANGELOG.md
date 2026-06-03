@@ -4,6 +4,12 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.3.14] - 2026-06-03
+
+### Fixed
+
+- Analysis errors now include the inference server response when JSON parsing or validation fails, making failed analyses easier to debug.
+
 ## [0.3.13] - 2026-06-03
 
 ### Added

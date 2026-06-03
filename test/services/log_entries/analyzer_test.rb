@@ -73,5 +73,21 @@ module LogEntries
       assert_equal 'failed', entry.reload.analysis_status
       assert_equal 'server unavailable', entry.analysis_error
     end
+
+    test 'stores inference response in analysis error for debugging' do
+      entry = log_entries(:pending_warning)
+      client = Class.new do
+        def analyze(_log_entry)
+          raise Inference::Client::Error, 'Inference server returned invalid JSON: unexpected token. Response: not-json'
+        end
+      end
+
+      assert_nothing_raised do
+        Analyzer.call(entry, client: client.new)
+      end
+
+      assert_equal 'failed', entry.reload.analysis_status
+      assert_match(/Response: not-json/, entry.analysis_error)
+    end
   end
 end

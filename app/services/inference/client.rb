@@ -59,8 +59,6 @@ module Inference
       end
 
       raise_response_error!(last_response)
-    rescue JSON::ParserError => e
-      raise Error, "Inference server returned invalid JSON: #{e.message}"
     end
 
     private
@@ -128,7 +126,11 @@ module Inference
     end
 
     def parse_body(response)
-      ResponseBody.normalize(JSON.parse(response.body), api_format: api_format)
+      raw = response.body
+      parsed = JSON.parse(raw)
+      ResponseBody.normalize(parsed, api_format: api_format)
+    rescue JSON::ParserError => e
+      raise Error, ErrorContext.append(raw, "Inference server returned invalid JSON: #{e.message}")
     end
 
     def http

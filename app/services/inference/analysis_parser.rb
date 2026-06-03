@@ -36,7 +36,8 @@ module Inference
       payload = data if payload.nil? && data.key?('classification')
       payload or raise_error('Response is missing structured analysis fields')
     rescue JSON::ParserError => e
-      raise Client::Error, "Inference analysis is not valid JSON: #{e.message}"
+      raise Client::Error,
+            ErrorContext.append(data['analysis'], "Inference analysis is not valid JSON: #{e.message}")
     end
 
     def parse_analysis_field(analysis)
@@ -50,7 +51,8 @@ module Inference
       missing = REQUIRED_KEYS - payload.keys
       return if missing.empty?
 
-      raise Client::Error, "Inference analysis is missing keys: #{missing.join(', ')}"
+      raise Client::Error,
+            ErrorContext.append(payload, "Inference analysis is missing keys: #{missing.join(', ')}")
     end
 
     def normalize_classification(value)
@@ -58,14 +60,21 @@ module Inference
       return classification if CLASSIFICATIONS.include?(classification)
 
       raise Client::Error,
-            "Inference classification must be one of: #{CLASSIFICATIONS.join(', ')} (got #{value.inspect})"
+            ErrorContext.append(
+              data,
+              "Inference classification must be one of: #{CLASSIFICATIONS.join(', ')} (got #{value.inspect})"
+            )
     end
 
     def normalize_urgency(value)
       urgency = value.to_s.strip.downcase
       return urgency if URGENCIES.include?(urgency)
 
-      raise Client::Error, "Inference urgency must be one of: #{URGENCIES.join(', ')} (got #{value.inspect})"
+      raise Client::Error,
+            ErrorContext.append(
+              data,
+              "Inference urgency must be one of: #{URGENCIES.join(', ')} (got #{value.inspect})"
+            )
     end
 
     def normalize_boolean(value)
@@ -82,12 +91,12 @@ module Inference
       when String then value.blank? ? [] : [value]
       when nil then []
       else
-        raise Client::Error, "Inference #{key} must be an array of strings"
+        raise Client::Error, ErrorContext.append(value, "Inference #{key} must be an array of strings")
       end
     end
 
     def raise_error(message)
-      raise Client::Error, message
+      raise Client::Error, ErrorContext.append(data, message)
     end
   end
 end
