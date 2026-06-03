@@ -6,7 +6,7 @@ class LogEntry < ApplicationRecord
   CLASSIFICATIONS = %w[connectivity informational configuration].freeze
   URGENCIES = %w[low medium high critical].freeze
 
-  validates :source_container, :stream, :message, :fingerprint, presence: true
+  validates :source_container, :stream, :message, :fingerprint, :normalized_message, presence: true
   validates :fingerprint, uniqueness: true
   validates :analysis_status, inclusion: { in: STATUSES }
   validates :occurrence_count, numericality: { only_integer: true, greater_than_or_equal_to: 1 }

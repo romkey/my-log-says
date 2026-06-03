@@ -3,6 +3,7 @@
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 require 'rails/test_help'
+require_relative 'support/prefix_duplicate_test_helper'
 
 module ActiveSupport
   class TestCase

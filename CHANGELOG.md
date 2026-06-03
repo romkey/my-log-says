@@ -4,6 +4,14 @@ All notable changes to LogLady are documented here.
 
 ## [Unreleased]
 
+## [0.3.12] - 2026-06-03
+
+### Added
+
+- Prefix-aware deduplication: timestamp/PID/log-level prefixes are stripped before fingerprinting.
+- `DedupeLogEntryJob` merges prefix-variant rows into a canonical entry before LLM analysis.
+- `log_entries:merge_prefix_duplicates` rake task to backfill and collapse existing duplicates.
+
 ## [0.3.11] - 2026-06-03
 
 ### Added

@@ -21,7 +21,7 @@ module LogEntries
     def call
       result = upsert_log_entry
 
-      AnalyzeLogEntryJob.perform_later(result.log_entry.id) if should_enqueue_analysis?(result)
+      DedupeLogEntryJob.perform_later(result.log_entry.id) if should_enqueue_dedupe?(result)
 
       result
     rescue ActiveRecord::RecordNotUnique
@@ -34,6 +34,10 @@ module LogEntries
 
     def fingerprint
       @fingerprint ||= Fingerprint.call(source_container: source_container, stream: stream, message: message)
+    end
+
+    def normalized_message
+      @normalized_message ||= Fingerprint.normalized_message_for(message)
     end
 
     def upsert_log_entry
@@ -64,6 +68,7 @@ module LogEntries
         source_container: source_container,
         stream: stream,
         message: message,
+        normalized_message: normalized_message,
         fingerprint: fingerprint,
         occurrence_count: 1
       }.merge(log_entry_state_attributes)
@@ -84,7 +89,7 @@ module LogEntries
       'pending'
     end
 
-    def should_enqueue_analysis?(result)
+    def should_enqueue_dedupe?(result)
       enqueue_analysis && !result.duplicate && result.log_entry.analysis_status == 'pending'
     end
   end

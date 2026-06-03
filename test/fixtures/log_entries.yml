@@ -2,6 +2,7 @@ analyzed_error:
   source_container: web
   stream: stderr
   message: "RuntimeError: connection refused"
+  normalized_message: "RuntimeError: connection refused"
   fingerprint: "analyzed-error-fingerprint"
   occurrence_count: 1
   first_seen_at: <%= 5.minutes.ago %>
@@ -22,6 +23,7 @@ pending_warning:
   source_container: worker
   stream: stdout
   message: "Retrying failed request"
+  normalized_message: "Retrying failed request"
   fingerprint: "pending-warning-fingerprint"
   occurrence_count: 1
   first_seen_at: <%= 2.minutes.ago %>
@@ -35,6 +37,7 @@ failed_inference:
   source_container: api
   stream: stderr
   message: "Connection reset by peer"
+  normalized_message: "Connection reset by peer"
   fingerprint: "failed-inference-fingerprint"
   occurrence_count: 1
   first_seen_at: <%= 3.minutes.ago %>
@@ -49,6 +52,7 @@ analyzed_info:
   source_container: web
   stream: stdout
   message: "Health check OK"
+  normalized_message: "Health check OK"
   fingerprint: "analyzed-info-fingerprint"
   occurrence_count: 3
   first_seen_at: <%= 10.minutes.ago %>

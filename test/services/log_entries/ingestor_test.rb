@@ -11,7 +11,7 @@ module LogEntries
 
     test 'creates a new log entry and queues analysis' do
       assert_difference -> { LogEntry.count }, 1 do
-        assert_enqueued_with(job: AnalyzeLogEntryJob) do
+        assert_enqueued_with(job: DedupeLogEntryJob) do
           result = Ingestor.call(
             source_container: 'web',
             stream: 'stderr',
@@ -23,6 +23,29 @@ module LogEntries
           assert_equal 1, result.log_entry.occurrence_count
           assert_equal 'pending', result.log_entry.analysis_status
         end
+      end
+    end
+
+    test 'treats prefix variants as duplicates without queueing another analysis' do
+      first = Ingestor.call(
+        source_container: 'web',
+        stream: 'stderr',
+        message: 'database timeout',
+        observed_at: @observed_at
+      )
+      clear_enqueued_jobs
+
+      assert_no_enqueued_jobs do
+        result = Ingestor.call(
+          source_container: 'web',
+          stream: 'stderr',
+          message: '2026-06-03T00:08:58.223Z INFO database timeout',
+          observed_at: @observed_at + 1.minute
+        )
+
+        assert result.duplicate
+        assert_equal first.log_entry.id, result.log_entry.id
+        assert_equal 2, result.log_entry.reload.occurrence_count
       end
     end
 

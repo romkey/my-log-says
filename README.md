@@ -101,7 +101,13 @@ curl -X POST http://localhost:3000/log_entries \
   -d '{"log_entry":{"source_container":"web","stream":"stderr","message":"database timeout"}}'
 ```
 
-Each log entry is fingerprinted by container, stream, and normalized message. When the same entry appears again, `occurrence_count` is incremented and no new analysis job is queued.
+Each log entry is fingerprinted by container, stream, and **normalized message** (timestamp, PID, and log-level prefixes stripped). Lines that differ only in those prefixes share one row, increment `occurrence_count`, and skip another LLM call.
+
+After upgrading, merge existing prefix-variant duplicates once:
+
+```sh
+docker compose -f docker-compose.server.yml exec web bin/rails log_entries:merge_prefix_duplicates
+```
 
 ## Testing
 
@@ -123,7 +129,7 @@ docker compose -f docker-compose.lint.yml run --rm rubocop
 - `DockerContainers::Synchronizer` lists containers via the Docker socket and upserts local records.
 - `DockerLogs::Importer` reads container logs through the Docker Engine API and sends them through the ingestor.
 - `SyncDockerContainersJob` and `ImportDockerLogsJob` run in Sidekiq on the `ingestion` queue (scheduled via sidekiq-cron).
-- `AnalyzeLogEntryJob` runs in Sidekiq on the `analysis` queue.
+- `DedupeLogEntryJob` merges prefix variants then enqueues `AnalyzeLogEntryJob` when needed.
 - `Inference::Client` calls the configured inference server with the API key from the environment.
 
 ## CI and Images

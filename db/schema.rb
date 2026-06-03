@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_03_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_03_000200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -52,6 +52,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_03_000100) do
     t.datetime "last_seen_at", null: false
     t.text "message", null: false
     t.boolean "needs_action", default: false, null: false
+    t.text "normalized_message"
     t.integer "occurrence_count", default: 1, null: false
     t.jsonb "other_suggestions", default: [], null: false
     t.jsonb "raw_payload", default: {}, null: false
@@ -64,5 +65,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_03_000100) do
     t.index ["fingerprint"], name: "index_log_entries_on_fingerprint", unique: true
     t.index ["last_seen_at"], name: "index_log_entries_on_last_seen_at"
     t.index ["needs_action"], name: "index_log_entries_on_needs_action"
+    t.index ["normalized_message"], name: "index_log_entries_on_normalized_message"
   end
 end
